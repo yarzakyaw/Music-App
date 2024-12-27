@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "172385167680",
+    "project_id": "mingalar-music-app",
+    "storage_bucket": "mingalar-music-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:172385167680:android:60b664d865cbb76420b2a5",
+        "android_client_info": {
+          "package_name": "com.mingalar.music"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtxhsJ3b3YB-gRZWo0C7nQg8uZcSJKb0w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

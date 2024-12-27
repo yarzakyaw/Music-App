@@ -1,0 +1,253 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_model.dart';
+import 'package:mingalar_music_app/core/providers/favorite_music_notifier.dart';
+import 'package:mingalar_music_app/core/widgets/create_upload_icon_text_button_widget.dart';
+import 'package:mingalar_music_app/core/widgets/music_list_playlist_widget.dart';
+import 'package:mingalar_music_app/core/widgets/playlist_icon_widget.dart';
+import 'package:mingalar_music_app/features/home/models/music_model.dart';
+import 'package:mingalar_music_app/features/home/view/screens/music_upload_screen.dart';
+
+class LibraryMusicPlaylistScreen extends ConsumerStatefulWidget {
+  const LibraryMusicPlaylistScreen({super.key});
+
+  @override
+  ConsumerState<LibraryMusicPlaylistScreen> createState() =>
+      _LibraryMusicPlaylistScreenState();
+}
+
+class _LibraryMusicPlaylistScreenState
+    extends ConsumerState<LibraryMusicPlaylistScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, MusicModel> favorites =
+        ref.watch(favoriteMusicNotifierProvider);
+    final Map<String, MusicModel> musicFavorites = {};
+
+    for (int i = 0; i < favorites.length; i++) {
+      final track = favorites[favorites.keys.elementAt(i)];
+      if (track!.audioType == "Music") musicFavorites[track.id] = track;
+    }
+
+    final recentPlaylistModel = CustomPlaylistModel(
+      id: 'likedSongs',
+      title: 'Liked Songs',
+      count: musicFavorites.values.toList().length,
+      playlist: musicFavorites.values.toList(),
+      playListType: 'Music',
+    );
+
+    return Stack(
+      children: [
+        Column(
+          children: [
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) {
+                      return MusicListPlaylistWidget(
+                        title: 'Liked Songs',
+                        playlist: musicFavorites.values.toList(),
+                        customRecentPlaylist: recentPlaylistModel,
+                      );
+                    },
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final tween =
+                          Tween(begin: const Offset(1, 0), end: Offset.zero)
+                              .chain(
+                        CurveTween(
+                          curve: Curves.easeIn,
+                        ),
+                      );
+
+                      final offsetAnimation = animation.drive(tween);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: PlaylistIconWidget(
+                count: musicFavorites.length,
+                title: 'Liked Songs',
+              ),
+            ),
+            //ListView.separated(itemBuilder: itemBuilder, separatorBuilder: separatorBuilder, itemCount: itemCount),
+            const SizedBox(height: 10),
+            CreateUploadIconTextButtonWidget(
+              onTap: () {},
+              title: 'Create Custom Playlist',
+            ),
+            const SizedBox(height: 10),
+            CreateUploadIconTextButtonWidget(
+              onTap: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) {
+                      return const MusicUploadScreen();
+                    },
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final tween =
+                          Tween(begin: const Offset(1, 0), end: Offset.zero)
+                              .chain(
+                        CurveTween(
+                          curve: Curves.easeIn,
+                        ),
+                      );
+
+                      final offsetAnimation = animation.drive(tween);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+              title: 'Upload New Track',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/* import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_model.dart';
+import 'package:mingalar_music_app/core/providers/favorite_music_notifier.dart';
+import 'package:mingalar_music_app/core/theme/app_pallete.dart';
+import 'package:mingalar_music_app/core/widgets/create_upload_icon_text_button_widget.dart';
+import 'package:mingalar_music_app/core/widgets/music_list_playlist_widget.dart';
+import 'package:mingalar_music_app/core/widgets/playlist_icon_widget.dart';
+import 'package:mingalar_music_app/features/home/models/music_model.dart';
+
+class LibraryMusicPlaylistScreen extends ConsumerStatefulWidget {
+  const LibraryMusicPlaylistScreen({super.key});
+
+  @override
+  ConsumerState<LibraryMusicPlaylistScreen> createState() =>
+      _LibraryMusicPlaylistScreenState();
+}
+
+class _LibraryMusicPlaylistScreenState
+    extends ConsumerState<LibraryMusicPlaylistScreen> {
+  bool _isVisible = false;
+  String selectedWidget = '';
+  String selectedWidgetTitle = '';
+  Map<String, Widget> libraryMusicPlaylistWidgets = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    final Map<String, MusicModel> favorites =
+        ref.watch(favoriteMusicNotifierProvider);
+    final Map<String, MusicModel> musicFavorites = {};
+
+    for (int i = 0; i < favorites.length; i++) {
+      final track = favorites[favorites.keys.elementAt(i)];
+      if (track!.audioType == "Music") musicFavorites[track.id] = track;
+    }
+
+    final recentPlaylistModel = CustomPlaylistModel(
+      id: 'likedSongs',
+      title: 'Liked Songs',
+      count: musicFavorites.values.toList().length,
+      playlist: musicFavorites.values.toList(),
+      playListType: 'Music',
+    );
+
+    return Stack(
+      children: [
+        Column(
+          children: [
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  libraryMusicPlaylistWidgets['Liked Songs'] =
+                      MusicListPlaylistWidget(
+                    title: 'Liked Songs',
+                    playlist: musicFavorites.values.toList(),
+                    customRecentPlaylist: recentPlaylistModel,
+                  );
+                  selectedWidget = 'Liked Songs';
+                  selectedWidgetTitle = 'Liked Songs';
+                  _isVisible = !_isVisible;
+                });
+              },
+              child: PlaylistIconWidget(
+                count: musicFavorites.length,
+                title: 'Liked Songs',
+              ),
+            ),
+            //ListView.separated(itemBuilder: itemBuilder, separatorBuilder: separatorBuilder, itemCount: itemCount),
+            const SizedBox(height: 10),
+            CreateUploadIconTextButtonWidget(
+              onTap: () {},
+              title: 'Create Custom Playlist',
+            ),
+            const SizedBox(height: 10),
+            CreateUploadIconTextButtonWidget(
+              onTap: () {
+                Navigator.pushNamed(context, 'MusicUploadScreen');
+              },
+              title: 'Upload New Track',
+            ),
+          ],
+        ),
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          right: _isVisible ? 0 : -screenWidth,
+          top: 0,
+          child: Container(
+            width: screenWidth,
+            height: screenHeight,
+            color: AppPallete.backgroundColor,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isVisible = !_isVisible;
+                        });
+                      },
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                    Text(
+                      selectedWidgetTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.sort),
+                    ),
+                  ],
+                ),
+                libraryMusicPlaylistWidgets[selectedWidget] ?? const SizedBox(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+} */
