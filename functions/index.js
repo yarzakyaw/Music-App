@@ -9,11 +9,29 @@
 
 // const {onRequest} = require("firebase-functions/v2/https");
 // const logger = require("firebase-functions/logger");
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 admin.initializeApp();
 
-exports.updateLikeStatus = require('./updateLikeStatus');
+exports.updateLikeStatus = require("./updateLikeStatus")
+    .updateLikeStatus;
+exports.updateDhammaLikeStatus = require("./updateLikeStatus")
+    .updateDhammaLikeStatus;
+exports.updateFollowerStatus = require("./updateFollowerStatus")
+    .updateFollowerStatus;
+exports.updateBhikkhuFollowerStatus = require("./updateFollowerStatus")
+    .updateBhikkhuFollowerStatus;
+exports.updatePlayStatus = require("./updatePlayStatus")
+    .updatePlayStatus;
+exports.updateDhammaPlayStatus = require("./updatePlayStatus")
+    .updateDhammaPlayStatus;
+exports.updateDownloadStatus = require("./updateDownloadStatus")
+    .updateDownloadStatus;
+exports.updateDhammaDownloadStatus = require("./updateDownloadStatus")
+    .updateDhammaDownloadStatus;
+exports.updateAlbumPopularitySchedule = require("./updateAlbumPopularity")
+    .updateAlbumPopularitySchedule;
+exports.onUserInteractionCreate = require("./updateAlbumPopularity")
+    .onUserInteractionCreate;
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

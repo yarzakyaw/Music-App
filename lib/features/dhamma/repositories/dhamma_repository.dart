@@ -1,15 +1,16 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mingalar_music_app/core/failure/app_failure.dart';
 import 'package:mingalar_music_app/features/dhamma/models/bhikkhu_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/dhamma_category_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/dhamma_collection_model.dart';
-import 'package:mingalar_music_app/features/dhamma/models/dhamma_user_interaction.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -240,7 +241,7 @@ class DhammaRepository {
     }
   }
 
-  Future<Either<AppFailure, bool>> updateFavoriteStatus({
+  /* Future<Either<AppFailure, bool>> updateFavoriteStatus({
     required bool isLiked,
     required MusicModel audioTrack,
   }) async {
@@ -314,9 +315,34 @@ class DhammaRepository {
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
+  } */
+
+  Future<Either<AppFailure, bool>> updateFavoriteStatus({
+    required bool isLiked,
+    required MusicModel audioTrack,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable("updateDhammaLikeStatus");
+
+      final response = await callable.call({
+        'isLiked': isLiked,
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'audioTrack': {
+          'id': audioTrack.id,
+          'artistId': audioTrack.artistId,
+          'albumId': audioTrack.albumId,
+        },
+      });
+      debugPrint('Like Status Response: ${response.data}');
+
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
   }
 
-  Future<Either<AppFailure, bool>> updateFollowerStatus({
+  /* Future<Either<AppFailure, bool>> updateFollowerStatus({
     required bool isFollowed,
     required BhikkhuModel bhikkhu,
   }) async {
@@ -371,9 +397,30 @@ class DhammaRepository {
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
+  } */
+
+  Future<Either<AppFailure, bool>> updateFollowerStatus({
+    required bool isFollowed,
+    required BhikkhuModel bhikkhu,
+  }) async {
+    try {
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('updateBhikkhuFollowerStatus');
+      final response = await callable.call({
+        'isFollowed': isFollowed,
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'bhikkhu': {
+          'id': bhikkhu.id,
+        },
+      });
+      debugPrint('Follower Status Response: ${response.data}');
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
   }
 
-  Future<Either<AppFailure, bool>> updatePlayStatus({
+  /* Future<Either<AppFailure, bool>> updatePlayStatus({
     required MusicModel audioTrack,
   }) async {
     try {
@@ -417,6 +464,27 @@ class DhammaRepository {
           .collection('dhammaUserInteractions')
           .doc(interactionId)
           .set(interaction.toMap());
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  } */
+
+  Future<Either<AppFailure, bool>> updatePlayStatus({
+    required MusicModel audioTrack,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('updateDhammaPlayStatus');
+      final response = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'audioTrack': {
+          'id': audioTrack.id,
+          'artistId': audioTrack.artistId,
+          'albumId': audioTrack.albumId,
+        },
+      });
+      debugPrint('Play Status Response: ${response.data}');
       return const Right(true);
     } catch (e) {
       return Left(AppFailure(e.toString()));

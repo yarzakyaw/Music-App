@@ -25,7 +25,7 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
   @override
   Widget build(BuildContext context) {
     final recentPlaylists = ref.watch(allMusicPlaylistsNotifierProvider);
-    final latestMusicThisWeek = ref.watch(getAllMusicThisWeekProvider);
+    final latestMusicThisWeek = ref.watch(getAllMusicProvider);
 
     return Stack(
       children: [

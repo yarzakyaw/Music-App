@@ -1,19 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mingalar_music_app/core/failure/app_failure.dart';
-import 'package:mingalar_music_app/features/dhamma/models/dhamma_user_interaction.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
-import 'package:mingalar_music_app/features/home/models/music_user_interaction.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 part 'download_repository.g.dart';
 
@@ -46,7 +44,7 @@ class DownloadRepository {
     }
   }
 
-  Future<void> updateDownloadStatusMusic({
+  /* Future<void> updateDownloadStatusMusic({
     required MusicModel audioTrack,
   }) async {
     try {
@@ -92,9 +90,30 @@ class DownloadRepository {
     } catch (e) {
       throw Exception('Failed to update download status');
     }
+  } */
+
+  Future<Either<AppFailure, bool>> updateDownloadStatusMusic({
+    required MusicModel audioTrack,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('updateDownloadStatus');
+      final response = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'audioTrack': {
+          'id': audioTrack.id,
+          'artistId': audioTrack.artistId,
+          'albumId': audioTrack.albumId,
+        },
+      });
+      debugPrint('Download Status Response: ${response.data}');
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
   }
 
-  Future<void> updateDownloadStatusDhamma({
+  /* Future<void> updateDownloadStatusDhamma({
     required MusicModel audioTrack,
   }) async {
     try {
@@ -139,6 +158,27 @@ class DownloadRepository {
           .set(interaction.toMap());
     } catch (e) {
       throw Exception('Failed to update download status');
+    }
+  } */
+
+  Future<Either<AppFailure, bool>> updateDownloadStatusDhamma({
+    required MusicModel audioTrack,
+  }) async {
+    try {
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('updateDhammaDownloadStatus');
+      final response = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'audioTrack': {
+          'id': audioTrack.id,
+          'artistId': audioTrack.artistId,
+          'albumId': audioTrack.albumId,
+        },
+      });
+      debugPrint('Download Status Response: ${response.data}');
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
     }
   }
 

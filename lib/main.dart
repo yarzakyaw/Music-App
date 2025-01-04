@@ -1,4 +1,6 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +26,16 @@ void main() async {
   Hive.defaultDirectory = dir.path;
   final container = ProviderContainer();
   await container.read(authViewModelProvider.notifier).setInitialScreen();
+
+  // Activate App Check with Debug Provider
+  await FirebaseAppCheck.instance.activate(
+    // webProvider:
+    //     ReCaptchaV3Provider('6LfU4WYqAAAAAL82p3ov1xayPPeFO8PCsSALGXnQ'),
+    // androidProvider: AndroidProvider.debug,
+    // appleProvider: AppleProvider.debug,
+    androidProvider:
+        kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
+  );
 
   runApp(
     UncontrolledProviderScope(

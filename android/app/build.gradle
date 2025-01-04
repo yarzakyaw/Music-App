@@ -5,6 +5,11 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+dependencies {
+  // implementation("com.google.firebase:firebase-appcheck-debug") // remove in production
+  implementation("com.google.firebase:firebase-appcheck-playintegrity")
+}
+
 android {
     namespace = "com.example.mingalar_music_app"
     compileSdk = flutter.compileSdkVersion
@@ -27,9 +32,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {  
+        release {  
+            keyAlias 'mingalarmusic'
+            keyPassword '3775110445'
+            storeFile file('mykey/mingalarmusickey.jks')
+            storePassword '3775110445'
+        }  
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            // signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release
+            // Optional: Enable ProGuard or R8 for code shrinking  
+            minifyEnabled false // Should be false if you want to generate symbols without minification
+            shrinkResources false
+            // Enable debug symbols
+            // ndk {  
+            //     debugSymbolLevel 'FULL' // You can also use 'SYMBOL_TABLE'
+            // }
         }
     }
 }

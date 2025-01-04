@@ -12,7 +12,6 @@ import 'package:mingalar_music_app/features/home/models/album_model.dart';
 import 'package:mingalar_music_app/features/home/models/artist_model.dart';
 import 'package:mingalar_music_app/features/home/models/genre_model.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
-import 'package:mingalar_music_app/features/home/models/music_user_interaction.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -186,15 +185,16 @@ class HomeRepository {
       albumUrl = await albumSnapshot.ref.getDownloadURL();
 
       final album = AlbumModel(
-          id: albumId,
-          artistId: artistId,
-          albumName: albumName,
-          releaseDate: releaseDate,
-          albumImageUrl: albumUrl,
-          totalDownloads: 0,
-          totalLikes: 0,
-          totalPlayCount: 0,
-          totalShare: 0);
+        id: albumId,
+        artistId: artistId,
+        albumName: albumName,
+        releaseDate: releaseDate,
+        albumImageUrl: albumUrl,
+        totalDownloads: 0,
+        totalLikes: 0,
+        totalPlayCount: 0,
+        totalShare: 0,
+      );
 
       await FirebaseFirestore.instance.collection('albums').doc(albumId).set(
             album.toMap(),
@@ -311,14 +311,14 @@ class HomeRepository {
   }) async {
     try {
       final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('updateLikeStatus');
+          FirebaseFunctions.instance.httpsCallable("updateLikeStatus");
+
       final response = await callable.call({
-        'isLiked': isLiked,
-        'audioTrack': {
-          'id': audioTrack.id,
-          'artistId': audioTrack.artistId,
-          'albumId': audioTrack.albumId,
-        },
+        "isLiked": isLiked,
+        "userId": FirebaseAuth.instance.currentUser!.uid,
+        "id": audioTrack.id,
+        "artistId": audioTrack.artistId,
+        "albumId": audioTrack.albumId,
       });
       debugPrint('Like Status Response: ${response.data}');
 
@@ -328,7 +328,7 @@ class HomeRepository {
     }
   }
 
-  Future<Either<AppFailure, bool>> updateFollowerStatus({
+  /* Future<Either<AppFailure, bool>> updateFollowerStatus({
     required bool isFollowed,
     required ArtistModel artist,
   }) async {
@@ -383,9 +383,30 @@ class HomeRepository {
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
+  } */
+
+  Future<Either<AppFailure, bool>> updateFollowerStatus({
+    required bool isFollowed,
+    required ArtistModel artist,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('updateFollowerStatus');
+      final response = await callable.call({
+        'isFollowed': isFollowed,
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'artist': {
+          'id': artist.id,
+        },
+      });
+      debugPrint('Follower Status Response: ${response.data}');
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
   }
 
-  Future<Either<AppFailure, bool>> updatePlayStatus({
+  /* Future<Either<AppFailure, bool>> updatePlayStatus({
     required MusicModel audioTrack,
   }) async {
     try {
@@ -429,6 +450,27 @@ class HomeRepository {
           .collection('userInteractions')
           .doc(interactionId)
           .set(interaction.toMap());
+      return const Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  } */
+
+  Future<Either<AppFailure, bool>> updatePlayStatus({
+    required MusicModel audioTrack,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('updatePlayStatus');
+      final response = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'audioTrack': {
+          'id': audioTrack.id,
+          'artistId': audioTrack.artistId,
+          'albumId': audioTrack.albumId,
+        },
+      });
+      debugPrint('Play Status Response: ${response.data}');
       return const Right(true);
     } catch (e) {
       return Left(AppFailure(e.toString()));
