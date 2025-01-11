@@ -2,19 +2,36 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
 
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
 
+part 'user_defined_playlist_model.g.dart';
+
+@HiveType(typeId: 3)
 class UserDefinedPlaylistModel {
+  @HiveField(0)
   final List<MusicModel> tracks;
+  @HiveField(1)
   final String id;
-  final String title;
-  final String description;
+  @HiveField(2)
+  String title;
+  @HiveField(3)
+  String description;
+  @HiveField(4)
   final DateTime createdAt;
-  final DateTime updatedAt;
+  @HiveField(5)
+  DateTime updatedAt;
+  @HiveField(6)
   final String createrId;
-  final String createrName;
-  final List<String> hashtags;
+  @HiveField(7)
+  final String creatorName;
+  @HiveField(8)
+  List<String> hashtags;
+  @HiveField(9)
+  final int likeCount;
+  @HiveField(10)
+  bool isShared;
   UserDefinedPlaylistModel({
     required this.tracks,
     required this.id,
@@ -23,8 +40,10 @@ class UserDefinedPlaylistModel {
     required this.createdAt,
     required this.updatedAt,
     required this.createrId,
-    required this.createrName,
+    required this.creatorName,
     required this.hashtags,
+    required this.likeCount,
+    required this.isShared,
   });
 
   UserDefinedPlaylistModel copyWith({
@@ -35,8 +54,10 @@ class UserDefinedPlaylistModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createrId,
-    String? createrName,
+    String? creatorName,
     List<String>? hashtags,
+    int? likeCount,
+    bool? isShared,
   }) {
     return UserDefinedPlaylistModel(
       tracks: tracks ?? this.tracks,
@@ -46,8 +67,10 @@ class UserDefinedPlaylistModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createrId: createrId ?? this.createrId,
-      createrName: createrName ?? this.createrName,
+      creatorName: creatorName ?? this.creatorName,
       hashtags: hashtags ?? this.hashtags,
+      likeCount: likeCount ?? this.likeCount,
+      isShared: isShared ?? this.isShared,
     );
   }
 
@@ -60,8 +83,10 @@ class UserDefinedPlaylistModel {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'createrId': createrId,
-      'createrName': createrName,
+      'creatorName': creatorName,
       'hashtags': hashtags,
+      'likeCount': likeCount,
+      'isShared': isShared,
     };
   }
 
@@ -82,10 +107,12 @@ class UserDefinedPlaylistModel {
           ? (map['updatedAt'] as Timestamp).toDate()
           : DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] ?? 0),
       createrId: map['createrId'] ?? '',
-      createrName: map['createrName'] ?? '',
+      creatorName: map['creatorName'] ?? '',
       hashtags: List<String>.from(
         (map['hashtags'] ?? []),
       ),
+      likeCount: map['likeCount'] ?? 0,
+      isShared: map['isShared'] ?? false,
     );
   }
 
@@ -97,7 +124,7 @@ class UserDefinedPlaylistModel {
 
   @override
   String toString() {
-    return 'UserDefinedPlaylistModel(tracks: $tracks, id: $id, title: $title, description: $description, createdAt: $createdAt, updatedAt: $updatedAt, createrId: $createrId, createrName: $createrName, hashtags: $hashtags)';
+    return 'UserDefinedPlaylistModel(tracks: $tracks, id: $id, title: $title, description: $description, createdAt: $createdAt, updatedAt: $updatedAt, createrId: $createrId, creatorName: $creatorName, hashtags: $hashtags, likeCount: $likeCount, isShared: $isShared)';
   }
 
   @override
@@ -111,8 +138,10 @@ class UserDefinedPlaylistModel {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.createrId == createrId &&
-        other.createrName == createrName &&
-        listEquals(other.hashtags, hashtags);
+        other.creatorName == creatorName &&
+        listEquals(other.hashtags, hashtags) &&
+        other.likeCount == likeCount &&
+        other.isShared == isShared;
   }
 
   @override
@@ -124,7 +153,16 @@ class UserDefinedPlaylistModel {
         createdAt.hashCode ^
         updatedAt.hashCode ^
         createrId.hashCode ^
-        createrName.hashCode ^
-        hashtags.hashCode;
+        creatorName.hashCode ^
+        hashtags.hashCode ^
+        likeCount.hashCode ^
+        isShared.hashCode;
   }
+
+  /* void addTrack(MusicModel track) {
+    // Avoid duplicates by checking if the track already exists
+    if (!tracks.any((existingTrack) => existingTrack.id == track.id)) {
+      tracks.add(track);
+    }
+  } */
 }

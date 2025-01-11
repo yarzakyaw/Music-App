@@ -583,6 +583,7 @@ class _MusicUploadScreenState extends ConsumerState<MusicUploadScreen> {
                           });
                         },
                       ),
+                      const SizedBox(height: 50)
                     ],
                   ),
                 ),

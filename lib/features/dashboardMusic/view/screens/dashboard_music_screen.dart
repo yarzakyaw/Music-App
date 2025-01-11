@@ -2,14 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mingalar_music_app/core/constants/text_strings.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_compilation_model.dart';
 import 'package:mingalar_music_app/core/models/custom_playlist_model.dart';
 import 'package:mingalar_music_app/core/providers/all_music_playlists_notifier.dart';
+import 'package:mingalar_music_app/core/providers/favorite_artist_notifier.dart';
 import 'package:mingalar_music_app/core/theme/app_pallete.dart';
 import 'package:mingalar_music_app/core/widgets/loader.dart';
 import 'package:mingalar_music_app/core/widgets/music_async_playlist_widget.dart';
+import 'package:mingalar_music_app/core/widgets/music_async_usergen_playlist_widget.dart';
 import 'package:mingalar_music_app/core/widgets/music_list_playlist_widget.dart';
 import 'package:mingalar_music_app/features/dashboardMusic/view/widgets/artist_detail_widget.dart';
 import 'package:mingalar_music_app/features/dashboardMusic/view/widgets/chart_icon_widget.dart';
+import 'package:mingalar_music_app/features/dashboardMusic/view/widgets/playlist_compilation_icon_widget.dart';
+import 'package:mingalar_music_app/features/home/models/artist_model.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
 import 'package:mingalar_music_app/features/home/viewmodel/home_view_model.dart';
 
@@ -26,6 +31,10 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
   Widget build(BuildContext context) {
     final recentPlaylists = ref.watch(allMusicPlaylistsNotifierProvider);
     final latestMusicThisWeek = ref.watch(getAllMusicProvider);
+    final mingalarCompilations = ref.watch(getTenMingalarPlaylistsProvider);
+    final fanPlaylists = ref.watch(getTenUserPlaylistsProvider);
+    final Map<String, ArtistModel> favoriteArtists =
+        ref.watch(favoriteArtistNotifierProvider);
 
     return Stack(
       children: [
@@ -36,6 +45,9 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
                   ? _buildRecentPlaylists(recentPlaylists)
                   : const SizedBox(),
               _buildCharts(context, latestMusicThisWeek),
+              _buildBestOfFavArtists(context, favoriteArtists),
+              _buildMingalarCompilations(context, mingalarCompilations),
+              _buildFanPlaylists(context, fanPlaylists),
               _buildArtists(),
               const SizedBox(height: 30),
             ],
@@ -90,8 +102,11 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   PageRouteBuilder(
-                                    pageBuilder: (context, animation,
-                                        secondaryAnimation) {
+                                    pageBuilder: (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                    ) {
                                       return ArtistDetailWidget(
                                         artistId: artist.id,
                                       );
@@ -190,8 +205,7 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
           child: Padding(
             padding: const EdgeInsets.only(left: 8.0, right: 8.0),
             child: SizedBox(
-              height: 130,
-              width: MediaQuery.of(context).size.width,
+              height: 150,
               child: Row(
                 children: [
                   GestureDetector(
@@ -258,6 +272,281 @@ class _DashboardMusicScreenState extends ConsumerState<DashboardMusicScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Column _buildBestOfFavArtists(
+      BuildContext context, Map<String, ArtistModel> favoriteArtists) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            tBestOfArtists,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: favoriteArtists.length,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              final artist =
+                  favoriteArtists[favoriteArtists.keys.elementAt(index)];
+              final mostLikedSongs =
+                  ref.watch(fetchTopTenLikedSongsByArtistProvider(artist!.id));
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return MusicAsyncPlaylistWidget(
+                          title: "Best of ${artist.nameENG}",
+                          playlist: mostLikedSongs,
+                        );
+                      },
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        final tween =
+                            Tween(begin: const Offset(1, 0), end: Offset.zero)
+                                .chain(
+                          CurveTween(
+                            curve: Curves.easeIn,
+                          ),
+                        );
+
+                        final offsetAnimation = animation.drive(tween);
+
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 8.0,
+                    right: 8.0,
+                  ),
+                  child: Container(
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: AppPallete.greyColor,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipOval(
+                          child: Image(
+                            width: 110,
+                            // height: 100,
+                            image: NetworkImage(
+                              artist.profileImageUrl,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          artist.nameENG,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildMingalarCompilations(BuildContext context,
+      AsyncValue<List<CustomPlaylistCompilationModel>> mingalarCompilations) {
+    return mingalarCompilations.when(
+      data: (compilationToSet) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                tMingalarCompilations,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: compilationToSet.length,
+                  itemBuilder: (context, index) {
+                    final playlist = compilationToSet[index];
+                    final asyncTracks = ref.watch(
+                      loadCustomPlaylistTracksProvider(
+                        'mingalarPlaylists',
+                        playlist.id,
+                      ),
+                    );
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                              return MusicAsyncUsergenPlaylistWidget(
+                                playlistData: playlist,
+                                asyncTracks: asyncTracks,
+                              );
+                            },
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              final tween = Tween(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                                  .chain(
+                                CurveTween(
+                                  curve: Curves.easeIn,
+                                ),
+                              );
+
+                              final offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: PlaylistCompilationIconWidget(
+                        title: playlist.title,
+                        asyncTracks: asyncTracks,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      error: (error, st) {
+        return Center(
+          child: Text(
+            error.toString(),
+          ),
+        );
+      },
+      loading: () => const Loader(),
+    );
+  }
+
+  Widget _buildFanPlaylists(BuildContext context,
+      AsyncValue<List<CustomPlaylistCompilationModel>> fanPlaylists) {
+    return fanPlaylists.when(
+      data: (playlistToSet) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                tFanPlaylists,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: playlistToSet.length,
+                  itemBuilder: (context, index) {
+                    final playlist = playlistToSet[index];
+                    final asyncTracks = ref.watch(
+                      loadCustomPlaylistTracksProvider(
+                        'fanPlaylists',
+                        playlist.id,
+                      ),
+                    );
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                              return MusicAsyncUsergenPlaylistWidget(
+                                playlistData: playlist,
+                                asyncTracks: asyncTracks,
+                              );
+                            },
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              final tween = Tween(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                                  .chain(
+                                CurveTween(
+                                  curve: Curves.easeIn,
+                                ),
+                              );
+
+                              final offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: PlaylistCompilationIconWidget(
+                        title: playlist.title,
+                        asyncTracks: asyncTracks,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      error: (error, st) {
+        return Center(
+          child: Text(
+            error.toString(),
+          ),
+        );
+      },
+      loading: () => const Loader(),
     );
   }
 

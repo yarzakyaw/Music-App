@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class UserModel {
   final String username;
   final User? userDetails;
+
   UserModel({
     required this.username,
     this.userDetails,
@@ -13,9 +14,6 @@ class UserModel {
   UserModel copyWith({
     String? username,
     User? userDetails,
-    String? ownedAccountId,
-    int? totalFollowing,
-    DateTime? createdAt,
   }) {
     return UserModel(
       username: username ?? this.username,

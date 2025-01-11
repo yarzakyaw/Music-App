@@ -127,6 +127,11 @@ const String tProfile = "Profile";
 const String tSearchHome = "Search";
 const String tLatestToday = "Latest Today";
 const String tCharts = "Charts";
+const String tBestOfArtists = "Best of Your Favorite Artists";
+const String tBestOfBhikkhus = "Greatest of Your Followed Bhikkhus";
+const String tMingalarCompilations = "Mingalar Compilations";
+const String tFanPlaylists = "Fan's Playlists";
+const String tFollowerPlaylists = "Followers' Playlists";
 
 const String tMusic = "Music";
 const String tDhamma = "Dhamma";

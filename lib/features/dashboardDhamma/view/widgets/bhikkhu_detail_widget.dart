@@ -118,7 +118,7 @@ class _BhikkhuDetailWidgetState extends ConsumerState<BhikkhuDetailWidget> {
               delegate: SliverChildListDelegate(
                 [
                   _buildBhikkhuDetails(bhikkhu),
-                  _buildPopularCollections(bhikkhu),
+                  _buildPreferredCollections(bhikkhu),
                   _buildSimilarBhikkhus(bhikkhu),
                   const SizedBox(height: 60),
                 ],
@@ -257,9 +257,9 @@ class _BhikkhuDetailWidgetState extends ConsumerState<BhikkhuDetailWidget> {
     );
   }
 
-  Widget _buildPopularCollections(BhikkhuModel bhikkhu) {
+  Widget _buildPreferredCollections(BhikkhuModel bhikkhu) {
     final collectionModel =
-        ref.watch(getCollectionsByBhikkhuProvider(bhikkhu.id));
+        ref.watch(getPreferredCollectionsByBhikkhuProvider(bhikkhu.id));
 
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 16.0),
@@ -374,9 +374,9 @@ class _BhikkhuDetailWidgetState extends ConsumerState<BhikkhuDetailWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              _buildSimilarArtistTile('ဦးညာဏိဿရ', bhikkhu.profileImageUrl),
+              _buildSimilarBhikkhuTile('ဦးညာဏိဿရ', bhikkhu.profileImageUrl),
               const SizedBox(width: 10),
-              _buildSimilarArtistTile('ဦးဃောသိတ', bhikkhu.profileImageUrl),
+              _buildSimilarBhikkhuTile('ဦးဃောသိတ', bhikkhu.profileImageUrl),
             ],
           ),
         ],
@@ -384,7 +384,7 @@ class _BhikkhuDetailWidgetState extends ConsumerState<BhikkhuDetailWidget> {
     );
   }
 
-  Widget _buildSimilarArtistTile(String name, String imageUrl) {
+  Widget _buildSimilarBhikkhuTile(String name, String imageUrl) {
     return Column(
       children: [
         Container(

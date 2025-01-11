@@ -1,19 +1,38 @@
 import 'dart:convert';
 
+import 'package:hive/hive.dart';
+
+part 'bhikkhu_model.g.dart';
+
+@HiveType(typeId: 2)
 class BhikkhuModel {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String nameENG;
+  @HiveField(2)
   final String nameMM;
+  @HiveField(3)
   final String alias;
+  @HiveField(4)
   final String title;
+  @HiveField(5)
   final String profileImageUrl;
+  @HiveField(6)
   final String ownerId;
+  @HiveField(7)
   final int totalPlayCount;
+  @HiveField(8)
   final int totalLikes;
+  @HiveField(9)
   final int totalShare;
+  @HiveField(10)
   final int totalDownloads;
+  @HiveField(11)
   final int totalFollowers;
+  @HiveField(12)
   final int totalFollowing;
+  @HiveField(13)
   final int vault;
   BhikkhuModel({
     required this.id,

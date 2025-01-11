@@ -7,7 +7,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:hive/hive.dart';
 import 'package:mingalar_music_app/core/failure/app_failure.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_compilation_model.dart';
+import 'package:mingalar_music_app/core/models/user_defined_playlist_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/bhikkhu_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/dhamma_category_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/dhamma_collection_model.dart';
@@ -24,6 +27,21 @@ DhammaRepository dhammaRepository(Ref ref) {
 
 class DhammaRepository {
   final currentUser = FirebaseAuth.instance.currentUser;
+  final Box<MusicModel> _allDhammaBox = Hive.box<MusicModel>('allDhamma');
+  final Box<MusicModel> _thisMonthDhammaBox =
+      Hive.box<MusicModel>('thisMonthDhamma');
+  final Box<BhikkhuModel> _allBhikkhusBox =
+      Hive.box<BhikkhuModel>('allBhikkhus');
+  final Box<BhikkhuModel> _tenBhikkhusBox =
+      Hive.box<BhikkhuModel>('tenBhikkhus');
+  final Box<CustomPlaylistCompilationModel> _allMingalarDhammaPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('allMingalarDhammaPlaylists');
+  final Box<CustomPlaylistCompilationModel> _tenMingalarDhammaPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('tenMingalarDhammaPlaylists');
+  final Box<CustomPlaylistCompilationModel> _allUserDhammaPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('allUserDhammaPlaylists');
+  final Box<CustomPlaylistCompilationModel> _tenUserDhammaPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('tenUserDhammaPlaylists');
 
   Future<Either<AppFailure, MusicModel>> uploadDhammatoStorage({
     required File selectedAudio,
@@ -200,6 +218,10 @@ class DhammaRepository {
         collectionName: collectionName,
         releaseDate: releaseDate,
         collectionImageUrl: collectionUrl,
+        totalDownloads: 0,
+        totalLikes: 0,
+        totalPlayCount: 0,
+        totalShare: 0,
       );
 
       await FirebaseFirestore.instance
@@ -236,6 +258,66 @@ class DhammaRepository {
             category.toMap(),
           );
       return Right(category);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, bool>> uploadUserGenDhammaPlaylist({
+    required UserDefinedPlaylistModel playlist,
+    required String creatorName,
+  }) async {
+    try {
+      if (creatorName == 'Mingalar') {
+        await FirebaseFirestore.instance
+            .collection('mingalarDhammaPlaylists')
+            .doc(playlist.id)
+            .set(
+          {
+            'id': playlist.id,
+            'title': playlist.title,
+            'description': playlist.description,
+            'createdAt': playlist.createdAt,
+            'updatedAt': DateTime.now(),
+            'createrId': playlist.createrId,
+            'createrName': creatorName,
+            'hashtags': playlist.hashtags,
+          },
+        );
+        for (MusicModel track in playlist.tracks) {
+          await FirebaseFirestore.instance
+              .collection('mingalarDhammaPlaylists')
+              .doc(playlist.id)
+              .collection('tracks')
+              .doc(track.id)
+              .set(track.toMap());
+        }
+      } else {
+        await FirebaseFirestore.instance
+            .collection('fanDhammaPlaylists')
+            .doc(playlist.id)
+            .set(
+          {
+            'id': playlist.id,
+            'title': playlist.title,
+            'description': playlist.description,
+            'createdAt': playlist.createdAt,
+            'updatedAt': DateTime.now(),
+            'createrId': playlist.createrId,
+            'createrName': creatorName,
+            'hashtags': playlist.hashtags,
+          },
+        );
+        for (MusicModel track in playlist.tracks) {
+          await FirebaseFirestore.instance
+              .collection('fanDhammaPlaylists')
+              .doc(playlist.id)
+              .collection('tracks')
+              .doc(track.id)
+              .set(track.toMap());
+        }
+      }
+      return Right(true);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
@@ -492,6 +574,39 @@ class DhammaRepository {
   }
 
   Future<Either<AppFailure, List<MusicModel>>> getAllDhammaTracks() async {
+    try {
+      // Check for cached music in Hive
+      if (_allDhammaBox.isNotEmpty) {
+        List<MusicModel> dhamma = _allDhammaBox.values.toList();
+        return Right(dhamma);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('dhamma');
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<MusicModel> fetchedDhamma = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final dhamma = MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedDhamma.add(dhamma);
+        await _allDhammaBox.put(dhamma.id, dhamma);
+      }
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('dhamma', 'allDhamma');
+
+      return Right(fetchedDhamma);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  /* Future<Either<AppFailure, List<MusicModel>>> getAllDhammaTracks() async {
     CollectionReference collectionRef =
         FirebaseFirestore.instance.collection('dhamma');
     try {
@@ -512,7 +627,7 @@ class DhammaRepository {
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
-  }
+  } */
 
   Future<Either<AppFailure, List<MusicModel>>> getCollectionTracks(
       DhammaCollectionModel collectionModel) async {
@@ -543,13 +658,19 @@ class DhammaRepository {
   }
 
   Future<Either<AppFailure, List<MusicModel>>> getAllTracksThisMonth() async {
-    DateTime now = DateTime.now();
-    DateTime monthAgo = now.subtract(const Duration(days: 30));
-    int monthAgoInMilliseconds = monthAgo.millisecondsSinceEpoch;
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('dhamma');
     try {
+      // Check for cached music in Hive
+      if (_thisMonthDhammaBox.isNotEmpty) {
+        List<MusicModel> dhamma = _thisMonthDhammaBox.values.toList();
+        return Right(dhamma);
+      }
+
       // Fetch all documents
+      DateTime now = DateTime.now();
+      DateTime monthAgo = now.subtract(const Duration(days: 30));
+      int monthAgoInMilliseconds = monthAgo.millisecondsSinceEpoch;
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('dhamma');
       QuerySnapshot querySnapshot = await collectionRef
           .where('uploadDate', isGreaterThan: monthAgoInMilliseconds)
           .orderBy('uploadDate')
@@ -558,61 +679,309 @@ class DhammaRepository {
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
 
-      List<MusicModel> dhamma = [];
+      List<MusicModel> fetchedDhamma = [];
 
       // Process the documents
       for (final doc in documents) {
-        dhamma.add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
+        final dhamma = MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedDhamma.add(dhamma);
+        await _thisMonthDhammaBox.put(dhamma.id, dhamma);
       }
 
-      return Right(dhamma);
+      // Maintain cache based on uploadDate within the last week
+      _maintainCacheWithinMonth(_thisMonthDhammaBox);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('music', 'thisMonthDhamma');
+
+      return Right(fetchedDhamma);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
-  Future<Either<AppFailure, List<BhikkhuModel>>> getTenBhikkhus() async {
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('bhikkhus');
+  Future<Either<AppFailure, List<MusicModel>>> fetchSuggestedDhammaTracks(
+    int offset,
+    int limit,
+  ) async {
     try {
       // Fetch all documents
-      QuerySnapshot querySnapshot =
-          await collectionRef.orderBy('totalFollowers').limit(10).get();
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('dhamma');
+      QuerySnapshot querySnapshot = await collectionRef
+          .orderBy('likeCount')
+          .startAt([offset])
+          .limit(limit)
+          .get();
 
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
 
-      List<BhikkhuModel> bhikkhus = [];
+      List<MusicModel> fetchedDhammaTracks = [];
 
       // Process the documents
       for (final doc in documents) {
-        bhikkhus.add(BhikkhuModel.fromMap(doc.data() as Map<String, dynamic>));
+        fetchedDhammaTracks
+            .add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
       }
 
-      return Right(bhikkhus);
+      return Right(fetchedDhammaTracks);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<MusicModel>>> getTopTenPlayedTracksByBhikkhu({
+    required String bhikkhuId,
+  }) async {
+    try {
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('dhamma');
+      QuerySnapshot querySnapshot = await collectionRef
+          .where('artistId', isEqualTo: bhikkhuId)
+          .orderBy('playCount')
+          .limit(10)
+          .get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<MusicModel> fetchedTracks = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        fetchedTracks
+            .add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+
+      return Right(fetchedTracks);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
   Future<Either<AppFailure, List<BhikkhuModel>>> getAllBhikkhus() async {
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('bhikkhus');
     try {
+      // Check for cached music in Hive
+      if (_allBhikkhusBox.isNotEmpty) {
+        List<BhikkhuModel> bhikkhus = _allBhikkhusBox.values.toList();
+        return Right(bhikkhus);
+      }
+
       // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('bhikkhus');
       QuerySnapshot querySnapshot = await collectionRef.get();
 
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
 
-      List<BhikkhuModel> bhikkhus = [];
+      List<BhikkhuModel> fetchedBhikkhus = [];
 
       // Process the documents
       for (final doc in documents) {
-        bhikkhus.add(BhikkhuModel.fromMap(doc.data() as Map<String, dynamic>));
+        final bhikkhu =
+            BhikkhuModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedBhikkhus.add(bhikkhu);
+        await _allBhikkhusBox.put(bhikkhu.id, bhikkhu);
       }
 
-      return Right(bhikkhus);
+      // Listen for real-time updates
+      listenToFirestoreUpdates('bhikkhus', 'allBhikkhus');
+
+      return Right(fetchedBhikkhus);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<BhikkhuModel>>> getTenBhikkhus() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenBhikkhusBox.isNotEmpty) {
+        List<BhikkhuModel> bhikkhus = _tenBhikkhusBox.values.toList();
+        return Right(bhikkhus);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('bhikkhus');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('totalFollowers').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<BhikkhuModel> fetchedBhikkhus = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final bhikkhus =
+            BhikkhuModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedBhikkhus.add(bhikkhus);
+        await _tenBhikkhusBox.put(bhikkhus.id, bhikkhus);
+      }
+
+      _maintainCacheLimit(_tenBhikkhusBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('bhikkhus', 'tenBhikkhus');
+
+      return Right(fetchedBhikkhus);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getAllMingalarDhammaPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_allMingalarDhammaPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _allMingalarDhammaPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('mingalarDhammaPlaylists');
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _allMingalarDhammaPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates(
+          'mingalarDhammaPlaylists', 'allMingalarDhammaPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getTenMingalarDhammaPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenMingalarDhammaPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _tenMingalarDhammaPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('mingalarDhammaPlaylists');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('playCount').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _tenMingalarDhammaPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      _maintainCacheLimitUserGenPlaylists(_tenMingalarDhammaPlaylistsBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates(
+          'mingalarDhammaPlaylists', 'tenMingalarDhammaPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getAllUserGenDhammaPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_allUserDhammaPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _allUserDhammaPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('fanDhammaPlaylists');
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _allUserDhammaPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('fanDhammaPlaylists', 'allUserDhammaPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getTenUserGenDhammaPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenUserDhammaPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _tenUserDhammaPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('fanDhammaPlaylists');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('playCount').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _tenUserDhammaPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      _maintainCacheLimitUserGenPlaylists(_tenUserDhammaPlaylistsBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('fanDhammaPlaylists', 'tenUserDhammaPlaylists');
+
+      return Right(fetchedPlaylists);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
@@ -672,6 +1041,35 @@ class DhammaRepository {
     }
   }
 
+  Future<Either<AppFailure, List<DhammaCollectionModel>>>
+      getPreferredCollectionsByBhikkhu(
+    String bhikkhuId,
+  ) async {
+    CollectionReference collectionRef = FirebaseFirestore.instance
+        .collection('preferredCollections')
+        .doc(bhikkhuId)
+        .collection('topCollections');
+    try {
+      // Fetch all documents
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<DhammaCollectionModel> dhammaCollections = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        dhammaCollections.add(
+            DhammaCollectionModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+
+      return Right(dhammaCollections);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
   Future<Either<AppFailure, BhikkhuModel>> getBhikkhuById(
     String bhikkhuId,
   ) async {
@@ -688,6 +1086,129 @@ class DhammaRepository {
       return Right(bhikkhuModel);
     } catch (e) {
       return Left(AppFailure(e.toString()));
+    }
+  }
+
+  void listenToFirestoreUpdates(String collectionName, String boxName) {
+    FirebaseFirestore.instance.collection(collectionName).snapshots().listen(
+      (snapshot) {
+        // Use the appropriate Hive box based on the collection
+        Box<dynamic>? box = getBoxForCollection(boxName);
+        if (box == null) return; // Handle unknown collection gracefully
+
+        for (var change in snapshot.docChanges) {
+          final doc = change.doc;
+          switch (change.type) {
+            case DocumentChangeType.added:
+            case DocumentChangeType.modified:
+              // Update or add the document
+              if (collectionName == 'dhamma') {
+                final dhamma =
+                    MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+                box.put(dhamma.id, dhamma);
+              } else if (collectionName == 'bhikkhus') {
+                final bhikkhu =
+                    BhikkhuModel.fromMap(doc.data() as Map<String, dynamic>);
+                box.put(bhikkhu.id, bhikkhu);
+              } else if (collectionName == 'fanDhammaPlaylists') {
+                final userPlaylist = CustomPlaylistCompilationModel.fromMap(
+                    doc.data() as Map<String, dynamic>);
+                box.put(userPlaylist.id, userPlaylist);
+              } else if (collectionName == 'mingalarDhammaPlaylists') {
+                final mingalarPlaylist = CustomPlaylistCompilationModel.fromMap(
+                    doc.data() as Map<String, dynamic>);
+                box.put(mingalarPlaylist.id, mingalarPlaylist);
+              }
+              break;
+
+            case DocumentChangeType.removed:
+              // Remove the document from Hive
+              box.delete(doc.id);
+              break;
+          }
+        }
+      },
+      onError: (error) {
+        // Handle any errors
+        debugPrint("Error listening to Firestore: $error");
+      },
+    );
+  }
+
+// Helper method to get the appropriate Hive box
+  Box<dynamic>? getBoxForCollection(String collectionName) {
+    switch (collectionName) {
+      case 'allDhamma':
+        return _allDhammaBox;
+      case 'allBhikkhus':
+        return _allBhikkhusBox;
+      case 'thisMonthDhamma':
+        return _thisMonthDhammaBox;
+      case 'tenBhikkhus':
+        return _tenBhikkhusBox;
+      case 'allMingalarDhammaPlaylists':
+        return _allMingalarDhammaPlaylistsBox;
+      case 'tenMingalarDhammaPlaylists':
+        return _tenMingalarDhammaPlaylistsBox;
+      case 'allUserDhammaPlaylists':
+        return _allUserDhammaPlaylistsBox;
+      case 'tenUserDhammaPlaylists':
+        return _tenUserDhammaPlaylistsBox;
+      default:
+        return null; // Return null for unknown collections
+    }
+  }
+
+  void _maintainCacheWithinMonth(Box<MusicModel> box) {
+    DateTime now = DateTime.now();
+    DateTime monthAgo = now.subtract(const Duration(days: 30));
+    // int weekAgoInMilliseconds = weekAgo.millisecondsSinceEpoch;
+
+    List<String> keysToRemove = [];
+    for (var key in box.keys) {
+      final music = box.get(key);
+      if (music != null && music.uploadDate.isBefore(monthAgo)) {
+        keysToRemove.add(key);
+      }
+    }
+
+    for (var key in keysToRemove) {
+      box.delete(key);
+    }
+  }
+
+  // Helper method to maintain the cache limit
+  void _maintainCacheLimit(Box<BhikkhuModel> box, int limit) {
+    List<BhikkhuModel> bhikkhuList = box.values.toList();
+    // Sort the list based on follower counts in descending order
+    bhikkhuList.sort((a, b) => b.totalFollowers.compareTo(a.totalFollowers));
+    if (bhikkhuList.length > limit) {
+      // Get the keys for the music that are not in the top N
+      final keysToRemove =
+          bhikkhuList.skip(limit).map((bhikkhu) => bhikkhu.id).toList();
+
+      // Remove those entries from the Hive box
+      for (var key in keysToRemove) {
+        box.delete(key);
+      }
+    }
+  }
+
+  // Helper method to maintain the cache limit
+  void _maintainCacheLimitUserGenPlaylists(
+      Box<CustomPlaylistCompilationModel> box, int limit) {
+    List<CustomPlaylistCompilationModel> playlistList = box.values.toList();
+    // Sort the list based on follower counts in descending order
+    playlistList.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+    if (playlistList.length > limit) {
+      // Get the keys for the music that are not in the top N
+      final keysToRemove =
+          playlistList.skip(limit).map((playlist) => playlist.id).toList();
+
+      // Remove those entries from the Hive box
+      for (var key in keysToRemove) {
+        box.delete(key);
+      }
     }
   }
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_compilation_model.dart';
+import 'package:mingalar_music_app/core/models/user_defined_playlist_model.dart';
 import 'package:mingalar_music_app/core/utils.dart';
 import 'package:mingalar_music_app/features/dhamma/models/bhikkhu_model.dart';
 import 'package:mingalar_music_app/features/dhamma/models/dhamma_category_model.dart';
@@ -10,6 +12,7 @@ import 'package:mingalar_music_app/features/dhamma/models/dhamma_collection_mode
 import 'package:mingalar_music_app/features/dhamma/repositories/dhamma_repository.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
 import 'package:mingalar_music_app/features/home/repositories/home_local_repository.dart';
+import 'package:mingalar_music_app/features/libraryDhammaPlaylist/repositories/user_generated_dhamma_playlists_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dhamma_view_model.g.dart';
@@ -35,8 +38,82 @@ Future<List<MusicModel>> getAllTracksThisMonth(Ref ref) async {
 }
 
 @riverpod
+Future<List<MusicModel>> getSuggestedDhammaTracks(
+    Ref ref, int offset, int limit) async {
+  final res = await ref
+      .watch(dhammaRepositoryProvider)
+      .fetchSuggestedDhammaTracks(offset, limit);
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
+Future<List<MusicModel>> fetchTopTenPlayedTracksByBhikkhu(
+    Ref ref, String bhikkhuId) async {
+  final res = await ref
+      .watch(dhammaRepositoryProvider)
+      .getTopTenPlayedTracksByBhikkhu(bhikkhuId: bhikkhuId);
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
 Future<List<BhikkhuModel>> getAllBhikkhus(Ref ref) async {
   final res = await ref.watch(dhammaRepositoryProvider).getAllBhikkhus();
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
+Future<List<CustomPlaylistCompilationModel>> getAllMingalarDhammaPlaylists(
+    Ref ref) async {
+  final res =
+      await ref.watch(dhammaRepositoryProvider).getAllMingalarDhammaPlaylists();
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
+Future<List<CustomPlaylistCompilationModel>> getTenMingalarDhammaPlaylists(
+    Ref ref) async {
+  final res =
+      await ref.watch(dhammaRepositoryProvider).getTenMingalarDhammaPlaylists();
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
+Future<List<CustomPlaylistCompilationModel>> getAllUserDhammaPlaylists(
+    Ref ref) async {
+  final res =
+      await ref.watch(dhammaRepositoryProvider).getAllUserGenDhammaPlaylists();
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
+Future<List<CustomPlaylistCompilationModel>> getTenUserDhammaPlaylists(
+    Ref ref) async {
+  final res =
+      await ref.watch(dhammaRepositoryProvider).getTenUserGenDhammaPlaylists();
 
   return switch (res) {
     Left(value: final l) => throw l.message,
@@ -89,6 +166,19 @@ Future<BhikkhuModel> getBhikkhuById(Ref ref, String bhikkhuId) async {
 }
 
 @riverpod
+Future<List<DhammaCollectionModel>> getPreferredCollectionsByBhikkhu(
+    Ref ref, String bhikkhuId) async {
+  final res = await ref
+      .watch(dhammaRepositoryProvider)
+      .getPreferredCollectionsByBhikkhu(bhikkhuId);
+
+  return switch (res) {
+    Left(value: final l) => throw l.message,
+    Right(value: final r) => r,
+  };
+}
+
+@riverpod
 Future<List<MusicModel>> getCollectionTracks(
     Ref ref, DhammaCollectionModel collectionModel) async {
   final res = await ref
@@ -105,11 +195,15 @@ Future<List<MusicModel>> getCollectionTracks(
 class DhammaViewModel extends _$DhammaViewModel {
   late DhammaRepository _dhammaRepository;
   late HomeLocalRepository _homeLocalRepository;
+  late UserGeneratedDhammaPlaylistsRepository
+      _userGeneratedDhammaPlaylistsRepository;
 
   @override
   AsyncValue? build() {
     _dhammaRepository = ref.watch(dhammaRepositoryProvider);
     _homeLocalRepository = ref.watch(homeLocalRepositoryProvider);
+    _userGeneratedDhammaPlaylistsRepository =
+        ref.watch(userGeneratedDhammaPlaylistsRepositoryProvider);
     return null;
   }
 
@@ -163,6 +257,10 @@ class DhammaViewModel extends _$DhammaViewModel {
 
   List<MusicModel> getRecentlyPlayedDhammaTracks() {
     return _homeLocalRepository.loadMusic("Dhamma");
+  }
+
+  List<UserDefinedPlaylistModel> getUserGeneratedDhammaPlaylists() {
+    return _userGeneratedDhammaPlaylistsRepository.loadPlaylists();
   }
 
   Future<void> addBhikkhu({

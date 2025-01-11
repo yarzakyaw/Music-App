@@ -32,6 +32,11 @@ exports.updateAlbumPopularitySchedule = require("./updateAlbumPopularity")
     .updateAlbumPopularitySchedule;
 exports.onUserInteractionCreate = require("./updateAlbumPopularity")
     .onUserInteractionCreate;
+exports.updateCollectionPreferenceSchedule =
+require("./updateCollectionPreference")
+    .updateCollectionPreferenceSchedule;
+exports.onDhammaUserInteractionCreate = require("./updateCollectionPreference")
+    .onDhammaUserInteractionCreate;
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

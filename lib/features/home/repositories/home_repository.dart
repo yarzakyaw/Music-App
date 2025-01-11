@@ -7,7 +7,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:hive/hive.dart';
 import 'package:mingalar_music_app/core/failure/app_failure.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_compilation_model.dart';
+import 'package:mingalar_music_app/core/models/user_defined_playlist_model.dart';
 import 'package:mingalar_music_app/features/home/models/album_model.dart';
 import 'package:mingalar_music_app/features/home/models/artist_model.dart';
 import 'package:mingalar_music_app/features/home/models/genre_model.dart';
@@ -24,6 +27,19 @@ HomeRepository homeRepository(Ref ref) {
 
 class HomeRepository {
   final currentUser = FirebaseAuth.instance.currentUser;
+  final Box<MusicModel> _allMusicBox = Hive.box<MusicModel>('allMusic');
+  final Box<MusicModel> _thisWeekMusicBox =
+      Hive.box<MusicModel>('thisWeekMusic');
+  final Box<ArtistModel> _allArtistsBox = Hive.box<ArtistModel>('allArtists');
+  final Box<ArtistModel> _tenArtistsBox = Hive.box<ArtistModel>('tenArtists');
+  final Box<CustomPlaylistCompilationModel> _allMingalarPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('allMingalarPlaylists');
+  final Box<CustomPlaylistCompilationModel> _tenMingalarPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('tenMingalarPlaylists');
+  final Box<CustomPlaylistCompilationModel> _allUserPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('allUserPlaylists');
+  final Box<CustomPlaylistCompilationModel> _tenUserPlaylistsBox =
+      Hive.box<CustomPlaylistCompilationModel>('tenUserPlaylists');
 
   Future<Either<AppFailure, MusicModel>> uploadMusictoStorage({
     required File selectedAudio,
@@ -228,6 +244,94 @@ class HomeRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  Future<Either<AppFailure, bool>> uploadUserGenPlaylist({
+    required UserDefinedPlaylistModel playlist,
+    required String creatorName,
+  }) async {
+    try {
+      if (creatorName == 'Mingalar') {
+        await FirebaseFirestore.instance
+            .collection('mingalarPlaylists')
+            .doc(playlist.id)
+            .set(
+          {
+            'id': playlist.id,
+            'title': playlist.title,
+            'description': playlist.description,
+            'createdAt': playlist.createdAt,
+            'updatedAt': DateTime.now(),
+            'createrId': playlist.createrId,
+            'creatorName': creatorName,
+            'hashtags': playlist.hashtags,
+            'likeCount': 0,
+            'isShared': true,
+          },
+        );
+        for (MusicModel track in playlist.tracks) {
+          await FirebaseFirestore.instance
+              .collection('mingalarPlaylists')
+              .doc(playlist.id)
+              .collection('tracks')
+              .doc(track.id)
+              .set(track.toMap());
+        }
+      } else {
+        await FirebaseFirestore.instance
+            .collection('fanPlaylists')
+            .doc(playlist.id)
+            .set(
+          {
+            'id': playlist.id,
+            'title': playlist.title,
+            'description': playlist.description,
+            'createdAt': playlist.createdAt,
+            'updatedAt': DateTime.now(),
+            'createrId': playlist.createrId,
+            'creatorName': creatorName,
+            'hashtags': playlist.hashtags,
+            'likeCount': 0,
+            'isShared': true,
+          },
+        );
+        for (MusicModel track in playlist.tracks) {
+          await FirebaseFirestore.instance
+              .collection('fanPlaylists')
+              .doc(playlist.id)
+              .collection('tracks')
+              .doc(track.id)
+              .set(track.toMap());
+        }
+      }
+      return Right(true);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  /* Future<void> createOrUpdatePlaylist(String playlistId, List<String> songIds,
+      String title, String description) async {
+    await FirebaseFirestore.instance
+        .collection('Playlists')
+        .doc(playlistId)
+        .set({
+      'title': title,
+      'description': description,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'songIds': songIds,
+      'criteria': title, // You can customize this further
+    }, SetOptions(merge: true)); // Use merge to update existing
+  } */
+
+  /* Playlists Collection
+playlistId
+title: Title of the playlist.
+description: Description of the playlist.
+createdAt: Timestamp for when the playlist was created.
+updatedAt: Timestamp for the last update.
+songIds: Array of song IDs in this playlist.
+hashtags: Array of strings representing hashtags (e.g., ["#Chill", "#Workout", "#SummerVibes"]). */
 
   /* Future<Either<AppFailure, bool>> updateFavoriteStatus({
     required bool isLiked,
@@ -478,30 +582,41 @@ class HomeRepository {
   }
 
   Future<Either<AppFailure, List<MusicModel>>> getAllMusic() async {
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('music');
     try {
+      // Check for cached music in Hive
+      if (_allMusicBox.isNotEmpty) {
+        List<MusicModel> music = _allMusicBox.values.toList();
+        return Right(music);
+      }
       // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('music');
       QuerySnapshot querySnapshot = await collectionRef.get();
 
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
 
-      List<MusicModel> music = [];
+      List<MusicModel> fetchedMusic = [];
 
       // Process the documents
       for (final doc in documents) {
-        music.add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
+        final music = MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedMusic.add(music);
+        await _allMusicBox.put(music.id, music);
       }
 
-      return Right(music);
+      // Listen for real-time updates
+      listenToFirestoreUpdates('music', 'allMusic');
+
+      return Right(fetchedMusic);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
   Future<Either<AppFailure, List<MusicModel>>> getAlbumMusics(
-      AlbumModel album) async {
+    AlbumModel album,
+  ) async {
     CollectionReference collectionRef = FirebaseFirestore.instance
         .collection('artists')
         .doc(album.artistId)
@@ -529,17 +644,119 @@ class HomeRepository {
   }
 
   Future<Either<AppFailure, List<MusicModel>>> getAllMusicThisWeek() async {
-    DateTime now = DateTime.now();
-    DateTime weekAgo = now.subtract(const Duration(days: 7));
-    int weekAgoInMilliseconds = weekAgo.millisecondsSinceEpoch;
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('music');
     try {
+      // Check for cached music in Hive
+      if (_thisWeekMusicBox.isNotEmpty) {
+        List<MusicModel> music = _thisWeekMusicBox.values.toList();
+        return Right(music);
+      }
       // Fetch all documents
+      DateTime now = DateTime.now();
+      DateTime weekAgo = now.subtract(const Duration(days: 7));
+      int weekAgoInMilliseconds = weekAgo.millisecondsSinceEpoch;
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('music');
       QuerySnapshot querySnapshot = await collectionRef
           .where('uploadDate', isGreaterThan: weekAgoInMilliseconds)
           .orderBy('uploadDate')
           .get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<MusicModel> fetchedMusic = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final music = MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedMusic.add(music);
+        await _thisWeekMusicBox.put(music.id, music);
+      }
+
+      // Maintain cache based on uploadDate within the last week
+      _maintainCacheWithinWeek(_thisWeekMusicBox);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('music', 'thisWeekMusic');
+
+      return Right(fetchedMusic);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<MusicModel>>> fetchSuggestedMusic(
+    int offset,
+    int limit,
+  ) async {
+    try {
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('music');
+      QuerySnapshot querySnapshot = await collectionRef
+          .orderBy('likeCount')
+          .startAt([offset])
+          .limit(limit)
+          .get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<MusicModel> fetchedMusic = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        fetchedMusic
+            .add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+
+      return Right(fetchedMusic);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<MusicModel>>> getTopTenLikedSongsByArtist({
+    required String artistId,
+  }) async {
+    try {
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('music');
+      QuerySnapshot querySnapshot = await collectionRef
+          .where('artistId', isEqualTo: artistId)
+          .orderBy('likeCount')
+          .limit(10)
+          .get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<MusicModel> fetchedMusic = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        fetchedMusic
+            .add(MusicModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+
+      return Right(fetchedMusic);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<MusicModel>>> getCustomPlaylistTracks({
+    required String collectionName,
+    required String playlistId,
+  }) async {
+    CollectionReference collectionRef = FirebaseFirestore.instance
+        .collection(collectionName)
+        .doc(playlistId)
+        .collection('tracks');
+    try {
+      // Fetch all documents
+      QuerySnapshot querySnapshot = await collectionRef.get();
 
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
@@ -558,29 +775,76 @@ class HomeRepository {
   }
 
   Future<Either<AppFailure, List<ArtistModel>>> getAllArtists() async {
-    CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('artists');
     try {
+      // Check for cached music in Hive
+      if (_allArtistsBox.isNotEmpty) {
+        List<ArtistModel> artists = _allArtistsBox.values.toList();
+        return Right(artists);
+      }
+
       // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('artists');
       QuerySnapshot querySnapshot = await collectionRef.get();
 
       // Extract the documents
       List<QueryDocumentSnapshot> documents = querySnapshot.docs;
 
-      List<ArtistModel> artists = [];
+      List<ArtistModel> fetchedArtists = [];
 
       // Process the documents
       for (final doc in documents) {
-        artists.add(ArtistModel.fromMap(doc.data() as Map<String, dynamic>));
+        final artist = ArtistModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedArtists.add(artist);
+        await _allArtistsBox.put(artist.id, artist);
       }
 
-      return Right(artists);
+      // Listen for real-time updates
+      listenToFirestoreUpdates('artists', 'allArtists');
+
+      return Right(fetchedArtists);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
   Future<Either<AppFailure, List<ArtistModel>>> getTenArtists() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenArtistsBox.isNotEmpty) {
+        List<ArtistModel> artists = _tenArtistsBox.values.toList();
+        return Right(artists);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('artists');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('totalFollowers').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<ArtistModel> fetchedArtists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final artist = ArtistModel.fromMap(doc.data() as Map<String, dynamic>);
+        fetchedArtists.add(artist);
+        await _tenArtistsBox.put(artist.id, artist);
+      }
+
+      _maintainCacheLimit(_tenArtistsBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('artists', 'tenArtists');
+
+      return Right(fetchedArtists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  /* Future<Either<AppFailure, List<ArtistModel>>> getTenArtists() async {
     CollectionReference collectionRef =
         FirebaseFirestore.instance.collection('artists');
     try {
@@ -599,6 +863,158 @@ class HomeRepository {
       }
 
       return Right(artists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  } */
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getAllMingalarPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_allMingalarPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _allMingalarPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('mingalarPlaylists');
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _allMingalarPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('mingalarPlaylists', 'allMingalarPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getTenMingalarPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenMingalarPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _tenMingalarPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('mingalarPlaylists');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('likeCount').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _tenMingalarPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      _maintainCacheLimitUserGenPlaylists(_tenMingalarPlaylistsBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('mingalarPlaylists', 'tenMingalarPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getAllUserGenPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_allUserPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _allUserPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('fanPlaylists');
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _allUserPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('fanPlaylists', 'allUserPlaylists');
+
+      return Right(fetchedPlaylists);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<CustomPlaylistCompilationModel>>>
+      getTenUserGenPlaylists() async {
+    try {
+      // Check for cached music in Hive
+      if (_tenUserPlaylistsBox.isNotEmpty) {
+        List<CustomPlaylistCompilationModel> playlists =
+            _tenUserPlaylistsBox.values.toList();
+        return Right(playlists);
+      }
+      // Fetch all documents
+      CollectionReference collectionRef =
+          FirebaseFirestore.instance.collection('fanPlaylists');
+      QuerySnapshot querySnapshot =
+          await collectionRef.orderBy('likeCount').limit(10).get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<CustomPlaylistCompilationModel> fetchedPlaylists = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        final playlist = CustomPlaylistCompilationModel.fromMap(
+            doc.data() as Map<String, dynamic>);
+        fetchedPlaylists.add(playlist);
+        await _tenUserPlaylistsBox.put(playlist.id, playlist);
+      }
+
+      _maintainCacheLimitUserGenPlaylists(_tenUserPlaylistsBox, 10);
+
+      // Listen for real-time updates
+      listenToFirestoreUpdates('fanPlaylists', 'tenUserPlaylists');
+
+      return Right(fetchedPlaylists);
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
@@ -634,6 +1050,33 @@ class HomeRepository {
         .collection('artists')
         .doc(artistId)
         .collection('albums');
+    try {
+      // Fetch all documents
+      QuerySnapshot querySnapshot = await collectionRef.get();
+
+      // Extract the documents
+      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+
+      List<AlbumModel> albums = [];
+
+      // Process the documents
+      for (final doc in documents) {
+        albums.add(AlbumModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+
+      return Right(albums);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<AlbumModel>>> getPopularAlbumsByArtist(
+    String artistId,
+  ) async {
+    CollectionReference collectionRef = FirebaseFirestore.instance
+        .collection('popularAlbums')
+        .doc(artistId)
+        .collection('topAlbums');
     try {
       // Fetch all documents
       QuerySnapshot querySnapshot = await collectionRef.get();
@@ -691,4 +1134,163 @@ class HomeRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  void listenToFirestoreUpdates(String collectionName, String boxName) {
+    FirebaseFirestore.instance.collection(collectionName).snapshots().listen(
+      (snapshot) {
+        // Use the appropriate Hive box based on the collection
+        Box<dynamic>? box = getBoxForCollection(boxName);
+        if (box == null) return; // Handle unknown collection gracefully
+
+        for (var change in snapshot.docChanges) {
+          final doc = change.doc;
+          switch (change.type) {
+            case DocumentChangeType.added:
+            case DocumentChangeType.modified:
+              // Update or add the document
+              if (collectionName == 'music') {
+                final music =
+                    MusicModel.fromMap(doc.data() as Map<String, dynamic>);
+                box.put(music.id, music);
+              } else if (collectionName == 'artists') {
+                final artist =
+                    ArtistModel.fromMap(doc.data() as Map<String, dynamic>);
+                box.put(artist.id, artist);
+              } else if (collectionName == 'fanPlaylists') {
+                final userPlaylist = CustomPlaylistCompilationModel.fromMap(
+                    doc.data() as Map<String, dynamic>);
+                box.put(userPlaylist.id, userPlaylist);
+              } else if (collectionName == 'mingalarPlaylists') {
+                final mingalarPlaylist = CustomPlaylistCompilationModel.fromMap(
+                    doc.data() as Map<String, dynamic>);
+                box.put(mingalarPlaylist.id, mingalarPlaylist);
+              }
+              break;
+
+            case DocumentChangeType.removed:
+              // Remove the document from Hive
+              box.delete(doc.id);
+              break;
+          }
+        }
+      },
+      onError: (error) {
+        // Handle any errors
+        debugPrint("Error listening to Firestore: $error");
+      },
+    );
+  }
+
+  // Helper method to get the appropriate Hive box
+  Box<dynamic>? getBoxForCollection(String boxName) {
+    switch (boxName) {
+      case 'allMusic':
+        return _allMusicBox;
+      case 'allArtists':
+        return _allArtistsBox;
+      case 'thisWeekMusic':
+        return _thisWeekMusicBox;
+      case 'tenArtists':
+        return _tenArtistsBox;
+      case 'allMingalarPlaylists':
+        return _allMingalarPlaylistsBox;
+      case 'tenMingalarPlaylists':
+        return _tenMingalarPlaylistsBox;
+      case 'allUserPlaylists':
+        return _allUserPlaylistsBox;
+      case 'tenUserPlaylists':
+        return _tenUserPlaylistsBox;
+      default:
+        return null;
+    }
+  }
+
+  void _maintainCacheWithinWeek(Box<MusicModel> box) {
+    DateTime now = DateTime.now();
+    DateTime weekAgo = now.subtract(const Duration(days: 7));
+    // int weekAgoInMilliseconds = weekAgo.millisecondsSinceEpoch;
+
+    List<String> keysToRemove = [];
+    for (var key in box.keys) {
+      final music = box.get(key);
+      if (music != null && music.uploadDate.isBefore(weekAgo)) {
+        keysToRemove.add(key);
+      }
+    }
+
+    for (var key in keysToRemove) {
+      box.delete(key);
+    }
+  }
+
+  // Helper method to maintain the cache limit
+  void _maintainCacheLimit(Box<ArtistModel> box, int limit) {
+    List<ArtistModel> artistList = box.values.toList();
+    // Sort the list based on follower counts in descending order
+    artistList.sort((a, b) => b.totalFollowers.compareTo(a.totalFollowers));
+    if (artistList.length > limit) {
+      // Get the keys for the music that are not in the top N
+      final keysToRemove =
+          artistList.skip(limit).map((artist) => artist.id).toList();
+
+      // Remove those entries from the Hive box
+      for (var key in keysToRemove) {
+        box.delete(key);
+      }
+    }
+  }
+
+  // Helper method to maintain the cache limit
+  void _maintainCacheLimitUserGenPlaylists(
+      Box<CustomPlaylistCompilationModel> box, int limit) {
+    List<CustomPlaylistCompilationModel> playlistList = box.values.toList();
+    // Sort the list based on follower counts in descending order
+    playlistList.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+    if (playlistList.length > limit) {
+      // Get the keys for the music that are not in the top N
+      final keysToRemove =
+          playlistList.skip(limit).map((playlist) => playlist.id).toList();
+
+      // Remove those entries from the Hive box
+      for (var key in keysToRemove) {
+        box.delete(key);
+      }
+    }
+  }
+
+  /* void listenToFirestoreUpdates(String collectionName) {
+    switch (collectionName) {
+      case 'music':
+        FirebaseFirestore.instance
+            .collection('music')
+            .snapshots()
+            .listen((snapshot) {
+          // Clear the existing Hive box to avoid duplicates
+          _allMusicBox.clear();
+
+          // Iterate through the documents in the Firestore snapshot
+          for (var doc in snapshot.docs) {
+            final music = MusicModel.fromMap(doc.data());
+            _allMusicBox.put(music.id, music); // Using id as the key
+          }
+        });
+        break;
+      case 'artists':
+        FirebaseFirestore.instance
+            .collection('artists')
+            .snapshots()
+            .listen((snapshot) {
+          // Clear the existing Hive box to avoid duplicates
+          _allArtistsBox.clear();
+
+          // Iterate through the documents in the Firestore snapshot
+          for (var doc in snapshot.docs) {
+            final artist = ArtistModel.fromMap(doc.data());
+            _allArtistsBox.put(artist.id, artist); // Using id as the key
+          }
+        });
+        break;
+      default:
+    }
+  } */
 }

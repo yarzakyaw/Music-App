@@ -2,16 +2,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mingalar_music_app/core/constants/text_strings.dart';
+import 'package:mingalar_music_app/core/models/custom_playlist_compilation_model.dart';
 import 'package:mingalar_music_app/core/models/custom_playlist_model.dart';
 import 'package:mingalar_music_app/core/providers/all_dhamma_playlists_notifier.dart';
+import 'package:mingalar_music_app/core/providers/favorite_bhikkhu_notifier.dart';
 import 'package:mingalar_music_app/core/theme/app_pallete.dart';
 import 'package:mingalar_music_app/core/widgets/loader.dart';
 import 'package:mingalar_music_app/core/widgets/music_async_playlist_widget.dart';
+import 'package:mingalar_music_app/core/widgets/music_async_usergen_playlist_widget.dart';
 import 'package:mingalar_music_app/core/widgets/music_list_playlist_widget.dart';
 import 'package:mingalar_music_app/features/dashboardDhamma/view/widgets/bhikkhu_detail_widget.dart';
 import 'package:mingalar_music_app/features/dashboardMusic/view/widgets/chart_icon_widget.dart';
+import 'package:mingalar_music_app/features/dashboardMusic/view/widgets/playlist_compilation_icon_widget.dart';
+import 'package:mingalar_music_app/features/dhamma/models/bhikkhu_model.dart';
 import 'package:mingalar_music_app/features/dhamma/viewmodel/dhamma_view_model.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
+import 'package:mingalar_music_app/features/home/viewmodel/home_view_model.dart';
 
 class DashboardDhammaScreen extends ConsumerStatefulWidget {
   const DashboardDhammaScreen({super.key});
@@ -26,6 +32,11 @@ class _DashboardDhammaScreenState extends ConsumerState<DashboardDhammaScreen> {
   Widget build(BuildContext context) {
     final recentPlaylists = ref.watch(allDhammaPlaylistsNotifierProvider);
     final latestDhammaThisMonth = ref.watch(getAllTracksThisMonthProvider);
+    final mingalarCompilations =
+        ref.watch(getTenMingalarDhammaPlaylistsProvider);
+    final fanPlaylists = ref.watch(getTenUserDhammaPlaylistsProvider);
+    final Map<String, BhikkhuModel> favoriteBhikkhus =
+        ref.watch(favoriteBhikkhuNotifierProvider);
 
     return Stack(
       children: [
@@ -36,15 +47,302 @@ class _DashboardDhammaScreenState extends ConsumerState<DashboardDhammaScreen> {
                   ? _buildRecentPlaylists(recentPlaylists)
                   : const SizedBox(),
               _buildCharts(context, latestDhammaThisMonth),
-              // if(recentlyPlayedMusic.isNotEmpty) {
-              //   PlaylistIconWidget(count: recentlyPlayedMusic.length, title: 'Recently Played',);
-              // },
+              _buildBestOfFavBhikkhus(context, favoriteBhikkhus),
+              _buildMingalarCompilations(context, mingalarCompilations),
+              _buildFanPlaylists(context, fanPlaylists),
               _buildBhikkhus(),
               const SizedBox(height: 30),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Column _buildBestOfFavBhikkhus(
+      BuildContext context, Map<String, BhikkhuModel> favoriteBhikkhus) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            tBestOfBhikkhus,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: favoriteBhikkhus.length,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              final bhikkhu =
+                  favoriteBhikkhus[favoriteBhikkhus.keys.elementAt(index)];
+              final mostPlayedTracks = ref
+                  .watch(fetchTopTenPlayedTracksByBhikkhuProvider(bhikkhu!.id));
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return MusicAsyncPlaylistWidget(
+                          title: "Greatest of ဆရာတော် ${bhikkhu.nameMM}",
+                          playlist: mostPlayedTracks,
+                        );
+                      },
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        final tween =
+                            Tween(begin: const Offset(1, 0), end: Offset.zero)
+                                .chain(
+                          CurveTween(
+                            curve: Curves.easeIn,
+                          ),
+                        );
+
+                        final offsetAnimation = animation.drive(tween);
+
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 8.0,
+                    right: 8.0,
+                  ),
+                  child: Container(
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: AppPallete.greyColor,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipOval(
+                          child: Image(
+                            width: 110,
+                            // height: 100,
+                            image: NetworkImage(
+                              bhikkhu.profileImageUrl,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          bhikkhu.nameMM,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          bhikkhu.alias,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildMingalarCompilations(BuildContext context,
+      AsyncValue<List<CustomPlaylistCompilationModel>> mingalarCompilations) {
+    return mingalarCompilations.when(
+      data: (compilationToSet) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                tMingalarCompilations,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: compilationToSet.length,
+                  itemBuilder: (context, index) {
+                    final playlist = compilationToSet[index];
+                    final asyncTracks = ref.watch(
+                      loadCustomPlaylistTracksProvider(
+                        'mingalarDhammaPlaylists',
+                        playlist.id,
+                      ),
+                    );
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                              return MusicAsyncUsergenPlaylistWidget(
+                                playlistData: playlist,
+                                asyncTracks: asyncTracks,
+                              );
+                            },
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              final tween = Tween(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                                  .chain(
+                                CurveTween(
+                                  curve: Curves.easeIn,
+                                ),
+                              );
+
+                              final offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: PlaylistCompilationIconWidget(
+                        title: playlist.title,
+                        asyncTracks: asyncTracks,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      error: (error, st) {
+        return Center(
+          child: Text(
+            error.toString(),
+          ),
+        );
+      },
+      loading: () => const Loader(),
+    );
+  }
+
+  Widget _buildFanPlaylists(BuildContext context,
+      AsyncValue<List<CustomPlaylistCompilationModel>> fanPlaylists) {
+    return fanPlaylists.when(
+      data: (playlistToSet) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                tFollowerPlaylists,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: playlistToSet.length,
+                  itemBuilder: (context, index) {
+                    final playlist = playlistToSet[index];
+                    final asyncTracks = ref.watch(
+                      loadCustomPlaylistTracksProvider(
+                        'fanDhammaPlaylists',
+                        playlist.id,
+                      ),
+                    );
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                              return MusicAsyncUsergenPlaylistWidget(
+                                playlistData: playlist,
+                                asyncTracks: asyncTracks,
+                              );
+                            },
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              final tween = Tween(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                                  .chain(
+                                CurveTween(
+                                  curve: Curves.easeIn,
+                                ),
+                              );
+
+                              final offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: PlaylistCompilationIconWidget(
+                        title: playlist.title,
+                        asyncTracks: asyncTracks,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      error: (error, st) {
+        return Center(
+          child: Text(
+            error.toString(),
+          ),
+        );
+      },
+      loading: () => const Loader(),
     );
   }
 

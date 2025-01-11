@@ -1,6 +1,284 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive/hive.dart';
+
+part 'music_model.g.dart';
+
+@HiveType(typeId: 0)
+class MusicModel {
+  @HiveField(0)
+  final String id;
+  @HiveField(1)
+  final String musicName;
+  @HiveField(2)
+  final String genre;
+  @HiveField(3)
+  final String audioType;
+  @HiveField(4)
+  final String userId;
+  @HiveField(5)
+  final String artistId;
+  @HiveField(6)
+  final String artist;
+  @HiveField(7)
+  final String artistMM;
+  @HiveField(8)
+  final String alias;
+  @HiveField(9)
+  final String title;
+  @HiveField(10)
+  final String albumId;
+  @HiveField(11)
+  final String albumName;
+  @HiveField(12)
+  final String featuring;
+  @HiveField(13)
+  final String thumbnailUrl;
+  @HiveField(14)
+  final String musicUrl;
+  @HiveField(15)
+  final DateTime releaseDate;
+  @HiveField(16)
+  final DateTime uploadDate;
+  @HiveField(17)
+  final int likeCount;
+  @HiveField(18)
+  final int playCount;
+  @HiveField(19)
+  final int shareCount;
+  @HiveField(20)
+  final int downloadCount;
+  @HiveField(21)
+  final String downloadOption;
+  @HiveField(22)
+  final String creditTo;
+  @HiveField(23)
+  final String hexCode;
+  @HiveField(24)
+  final List<String> hashtags;
+  MusicModel({
+    required this.id,
+    required this.musicName,
+    required this.audioType,
+    required this.genre,
+    required this.userId,
+    required this.artistId,
+    required this.artist,
+    required this.artistMM,
+    required this.alias,
+    required this.title,
+    required this.albumId,
+    required this.albumName,
+    required this.featuring,
+    required this.thumbnailUrl,
+    required this.musicUrl,
+    required this.releaseDate,
+    required this.uploadDate,
+    required this.likeCount,
+    required this.playCount,
+    required this.shareCount,
+    required this.downloadCount,
+    required this.downloadOption,
+    required this.creditTo,
+    required this.hexCode,
+    required this.hashtags,
+  });
+
+  MusicModel copyWith({
+    String? id,
+    String? musicName,
+    String? audioType,
+    String? genre,
+    String? userId,
+    String? artistId,
+    String? artist,
+    String? artistMM,
+    String? alias,
+    String? title,
+    String? albumId,
+    String? albumName,
+    String? featuring,
+    String? thumbnailUrl,
+    String? musicUrl,
+    DateTime? releaseDate,
+    DateTime? uploadDate,
+    int? likeCount,
+    int? playCount,
+    int? shareCount,
+    int? downloadCount,
+    String? downloadOption,
+    String? creditTo,
+    String? hexCode,
+    List<String>? hashtags,
+  }) {
+    return MusicModel(
+      id: id ?? this.id,
+      musicName: musicName ?? this.musicName,
+      audioType: audioType ?? this.audioType,
+      genre: genre ?? this.genre,
+      userId: userId ?? this.userId,
+      artistId: artistId ?? this.artistId,
+      artist: artist ?? this.artist,
+      artistMM: artistMM ?? this.artistMM,
+      alias: alias ?? this.alias,
+      title: title ?? this.title,
+      albumId: albumId ?? this.albumId,
+      albumName: albumName ?? this.albumName,
+      featuring: featuring ?? this.featuring,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      musicUrl: musicUrl ?? this.musicUrl,
+      releaseDate: releaseDate ?? this.releaseDate,
+      uploadDate: uploadDate ?? this.uploadDate,
+      likeCount: likeCount ?? this.likeCount,
+      playCount: playCount ?? this.playCount,
+      shareCount: shareCount ?? this.shareCount,
+      downloadCount: downloadCount ?? this.downloadCount,
+      downloadOption: downloadOption ?? this.downloadOption,
+      creditTo: creditTo ?? this.creditTo,
+      hexCode: hexCode ?? this.hexCode,
+      hashtags: hashtags ?? this.hashtags,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'musicName': musicName,
+      'audioType': audioType,
+      'genre': genre,
+      'userId': userId,
+      'artistId': artistId,
+      'artist': artist,
+      'artistMM': artistMM,
+      'alias': alias,
+      'title': title,
+      'albumId': albumId,
+      'albumName': albumName,
+      'featuring': featuring,
+      'thumbnailUrl': thumbnailUrl,
+      'musicUrl': musicUrl,
+      'releaseDate': releaseDate.millisecondsSinceEpoch,
+      'uploadDate': uploadDate.millisecondsSinceEpoch,
+      'likeCount': likeCount,
+      'playCount': playCount,
+      'shareCount': shareCount,
+      'downloadCount': downloadCount,
+      'downloadOption': downloadOption,
+      'creditTo': creditTo,
+      'hexCode': hexCode,
+      'hashtags': hashtags,
+    };
+  }
+
+  factory MusicModel.fromMap(Map<String, dynamic> map) {
+    return MusicModel(
+      id: map['id'] ?? '',
+      musicName: map['musicName'] ?? '',
+      audioType: map['audioType'] ?? '',
+      genre: map['genre'] ?? '',
+      userId: map['userId'] ?? '',
+      artistId: map['artistId'] ?? '',
+      artist: map['artist'] ?? '',
+      artistMM: map['artistMM'] ?? '',
+      alias: map['alias'] ?? '',
+      title: map['title'] ?? '',
+      albumId: map['albumId'] ?? '',
+      albumName: map['albumName'] ?? '',
+      featuring: map['featuring'] ?? '',
+      thumbnailUrl: map['thumbnailUrl'] ?? '',
+      musicUrl: map['musicUrl'] ?? '',
+      releaseDate: map['releaseDate'] is Timestamp
+          ? (map['releaseDate'] as Timestamp).toDate()
+          : DateTime.fromMillisecondsSinceEpoch(map['releaseDate'] ?? 0),
+      uploadDate: map['uploadDate'] is Timestamp
+          ? (map['uploadDate'] as Timestamp).toDate()
+          : DateTime.fromMillisecondsSinceEpoch(map['uploadDate'] ?? 0),
+      likeCount: map['likeCount'] ?? 0,
+      playCount: map['playCount'] ?? 0,
+      shareCount: map['shareCount'] ?? 0,
+      downloadCount: map['downloadCount'] ?? 0,
+      downloadOption: map['downloadOption'] ?? '',
+      creditTo: map['creditTo'] ?? '',
+      hexCode: map['hexCode'] ?? '',
+      hashtags: List<String>.from(map['hashtags'] ?? []),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory MusicModel.fromJson(String source) =>
+      MusicModel.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  @override
+  String toString() {
+    return 'MusicModel(id: $id, musicName: $musicName, audioType: $audioType, genre: $genre, userId: $userId, artistId: $artistId, artist: $artist, artistMM: $artistMM, alias: $alias, title: $title, albumId: $albumId, albumName: $albumName, featuring: $featuring, thumbnailUrl: $thumbnailUrl, musicUrl: $musicUrl, releaseDate: $releaseDate, uploadDate: $uploadDate, likeCount: $likeCount, playCount: $playCount, shareCount: $shareCount, downloadCount: $downloadCount, downloadOption: $downloadOption, creditTo: $creditTo, hexCode: $hexCode, hashtags: $hashtags)';
+  }
+
+  @override
+  bool operator ==(covariant MusicModel other) {
+    if (identical(this, other)) return true;
+
+    return other.id == id &&
+        other.musicName == musicName &&
+        other.audioType == audioType &&
+        other.genre == genre &&
+        other.userId == userId &&
+        other.artistId == artistId &&
+        other.artist == artist &&
+        other.artistMM == artistMM &&
+        other.alias == alias &&
+        other.title == title &&
+        other.albumId == albumId &&
+        other.albumName == albumName &&
+        other.featuring == featuring &&
+        other.thumbnailUrl == thumbnailUrl &&
+        other.musicUrl == musicUrl &&
+        other.releaseDate == releaseDate &&
+        other.uploadDate == uploadDate &&
+        other.likeCount == likeCount &&
+        other.playCount == playCount &&
+        other.shareCount == shareCount &&
+        other.downloadCount == downloadCount &&
+        other.downloadOption == downloadOption &&
+        other.creditTo == creditTo &&
+        other.hexCode == hexCode &&
+        other.hashtags == hashtags;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        musicName.hashCode ^
+        audioType.hashCode ^
+        genre.hashCode ^
+        userId.hashCode ^
+        artistId.hashCode ^
+        artist.hashCode ^
+        artistMM.hashCode ^
+        alias.hashCode ^
+        title.hashCode ^
+        albumId.hashCode ^
+        albumName.hashCode ^
+        featuring.hashCode ^
+        thumbnailUrl.hashCode ^
+        musicUrl.hashCode ^
+        releaseDate.hashCode ^
+        uploadDate.hashCode ^
+        likeCount.hashCode ^
+        playCount.hashCode ^
+        shareCount.hashCode ^
+        downloadCount.hashCode ^
+        downloadOption.hashCode ^
+        creditTo.hashCode ^
+        hexCode.hashCode ^
+        hashtags.hashCode;
+  }
+}
+
+/* import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MusicModel {
   final String id;
@@ -246,3 +524,4 @@ class MusicModel {
         hashtags.hashCode;
   }
 }
+ */

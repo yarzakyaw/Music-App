@@ -4,6 +4,7 @@ import 'package:mingalar_music_app/core/constants/firebase_exceptions.dart';
 import 'package:mingalar_music_app/core/failure/app_failure.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:mingalar_music_app/core/models/user_info_model.dart';
 import 'package:mingalar_music_app/core/models/user_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -69,6 +70,7 @@ class AuthRemoteRepository {
           'totalFollowing': 0,
           'vault': 0,
           'createdAt': DateTime.now(),
+          'accountType': "user"
         },
       );
       return Right(user);
@@ -112,6 +114,22 @@ class AuthRemoteRepository {
       throw Left(AppFailure(FirebaseExceptions.fromCode(e.code).message));
     } catch (_) {
       throw Left(AppFailure(const FirebaseExceptions().message));
+    }
+  }
+
+  Future<Either<AppFailure, UserInfoModel>> getUserInfo({
+    required String userId,
+  }) async {
+    // User currentUser;
+    UserInfoModel currentUser;
+    try {
+      DocumentSnapshot userDoc =
+          await _db.collection('users').doc(userId).get();
+      currentUser =
+          UserInfoModel.fromMap(userDoc.data() as Map<String, dynamic>);
+      return Right(currentUser);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
     }
   }
 }

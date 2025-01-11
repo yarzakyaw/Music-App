@@ -14,12 +14,13 @@ class ChartIconWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 130,
+      width: 150,
       decoration: BoxDecoration(
         shape: BoxShape.rectangle,
         gradient: LinearGradient(
           colors: colors,
         ),
+        borderRadius: BorderRadius.circular(5),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

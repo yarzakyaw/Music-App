@@ -256,7 +256,7 @@ class _ArtistDetailWidgetState extends ConsumerState<ArtistDetailWidget> {
   }
 
   Widget _buildPopularReleases(ArtistModel artist) {
-    final albumModel = ref.watch(getAlbumsByArtistProvider(artist.id));
+    final albumModel = ref.watch(getPopularAlbumsByArtistProvider(artist.id));
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 16.0),
       child: Column(

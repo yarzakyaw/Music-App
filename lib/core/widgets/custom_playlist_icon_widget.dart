@@ -1,19 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:mingalar_music_app/core/theme/app_pallete.dart';
 
-class PlaylistIconWidget extends StatelessWidget {
-  final int count;
+class CustomPlaylistIconWidget extends StatelessWidget {
   final String title;
-  final List<Color>? colors;
+  final String description;
 
-  const PlaylistIconWidget({
+  const CustomPlaylistIconWidget({
     super.key,
-    required this.count,
     required this.title,
-    this.colors = const [
-      AppPallete.gradient1,
-      AppPallete.gradient2,
-    ],
+    required this.description,
   });
 
   @override
@@ -21,7 +16,6 @@ class PlaylistIconWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
@@ -30,15 +24,14 @@ class PlaylistIconWidget extends StatelessWidget {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: colors!,
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                  ),
+                  color: AppPallete.greyColor,
                   // border: Border.all(color: AppPallete.borderColor),
                   shape: BoxShape.rectangle,
                 ),
-                child: const Icon(CupertinoIcons.heart, size: 30),
+                child: const Icon(
+                  CupertinoIcons.music_note_list,
+                  size: 30,
+                ),
               ),
               const SizedBox(width: 10),
               Column(
@@ -47,12 +40,12 @@ class PlaylistIconWidget extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
+                        fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    'Playlist - $count track(s)',
+                    description,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                     style: const TextStyle(fontSize: 12),
                   ),
                 ],

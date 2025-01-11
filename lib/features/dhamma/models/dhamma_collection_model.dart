@@ -9,6 +9,10 @@ class DhammaCollectionModel {
   final String collectionName;
   final DateTime releaseDate;
   final String collectionImageUrl;
+  final int totalDownloads;
+  final int totalLikes;
+  final int totalPlayCount;
+  final int totalShare;
 
   DhammaCollectionModel({
     required this.id,
@@ -16,6 +20,10 @@ class DhammaCollectionModel {
     required this.collectionName,
     required this.releaseDate,
     required this.collectionImageUrl,
+    required this.totalDownloads,
+    required this.totalLikes,
+    required this.totalPlayCount,
+    required this.totalShare,
   });
 
   DhammaCollectionModel copyWith({
@@ -24,6 +32,10 @@ class DhammaCollectionModel {
     String? collectionName,
     DateTime? releaseDate,
     String? collectionImageUrl,
+    int? totalDownloads,
+    int? totalLikes,
+    int? totalPlayCount,
+    int? totalShare,
   }) {
     return DhammaCollectionModel(
       id: id ?? this.id,
@@ -31,6 +43,10 @@ class DhammaCollectionModel {
       collectionName: collectionName ?? this.collectionName,
       releaseDate: releaseDate ?? this.releaseDate,
       collectionImageUrl: collectionImageUrl ?? this.collectionImageUrl,
+      totalDownloads: totalDownloads ?? this.totalDownloads,
+      totalLikes: totalLikes ?? this.totalLikes,
+      totalPlayCount: totalPlayCount ?? this.totalPlayCount,
+      totalShare: totalShare ?? this.totalShare,
     );
   }
 
@@ -41,6 +57,10 @@ class DhammaCollectionModel {
       'collectionName': collectionName,
       'releaseDate': releaseDate.millisecondsSinceEpoch,
       'collectionImageUrl': collectionImageUrl,
+      'totalDownloads': totalDownloads,
+      'totalLikes': totalLikes,
+      'totalPlayCount': totalPlayCount,
+      'totalShare': totalShare,
     };
   }
 
@@ -53,6 +73,10 @@ class DhammaCollectionModel {
           ? (map['releaseDate'] as Timestamp).toDate()
           : DateTime.fromMillisecondsSinceEpoch(map['releaseDate'] ?? 0),
       collectionImageUrl: map['collectionImageUrl'] ?? '',
+      totalDownloads: map['totalDownloads'] ?? 0,
+      totalLikes: map['totalLikes'] ?? 0,
+      totalPlayCount: map['totalPlayCount'] ?? 0,
+      totalShare: map['totalShare'] ?? 0,
     );
   }
 
@@ -64,7 +88,7 @@ class DhammaCollectionModel {
 
   @override
   String toString() {
-    return 'DhammaCollectionModel(id: $id, bhikkhuId: $bhikkhuId, collectionName: $collectionName, releaseDate: $releaseDate, collectionImageUrl: $collectionImageUrl)';
+    return 'DhammaCollectionModel(id: $id, bhikkhuId: $bhikkhuId, collectionName: $collectionName, releaseDate: $releaseDate, collectionImageUrl: $collectionImageUrl, totalDownloads: $totalDownloads, totalLikes: $totalLikes, totalPlayCount: $totalPlayCount, totalShare: $totalShare)';
   }
 
   @override
@@ -75,7 +99,11 @@ class DhammaCollectionModel {
         other.bhikkhuId == bhikkhuId &&
         other.collectionName == collectionName &&
         other.releaseDate == releaseDate &&
-        other.collectionImageUrl == collectionImageUrl;
+        other.collectionImageUrl == collectionImageUrl &&
+        other.totalDownloads == totalDownloads &&
+        other.totalLikes == totalLikes &&
+        other.totalPlayCount == totalPlayCount &&
+        other.totalShare == totalShare;
   }
 
   @override
@@ -84,6 +112,10 @@ class DhammaCollectionModel {
         bhikkhuId.hashCode ^
         collectionName.hashCode ^
         releaseDate.hashCode ^
-        collectionImageUrl.hashCode;
+        collectionImageUrl.hashCode ^
+        totalDownloads.hashCode ^
+        totalLikes.hashCode ^
+        totalPlayCount.hashCode ^
+        totalShare.hashCode;
   }
 }

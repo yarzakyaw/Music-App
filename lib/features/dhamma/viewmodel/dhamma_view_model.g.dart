@@ -45,6 +45,320 @@ final getAllTracksThisMonthProvider =
 // ignore: unused_element
 typedef GetAllTracksThisMonthRef
     = AutoDisposeFutureProviderRef<List<MusicModel>>;
+String _$getSuggestedDhammaTracksHash() =>
+    r'bbded40e3b99b738d4b098575eb4eb3e069ee04b';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [getSuggestedDhammaTracks].
+@ProviderFor(getSuggestedDhammaTracks)
+const getSuggestedDhammaTracksProvider = GetSuggestedDhammaTracksFamily();
+
+/// See also [getSuggestedDhammaTracks].
+class GetSuggestedDhammaTracksFamily
+    extends Family<AsyncValue<List<MusicModel>>> {
+  /// See also [getSuggestedDhammaTracks].
+  const GetSuggestedDhammaTracksFamily();
+
+  /// See also [getSuggestedDhammaTracks].
+  GetSuggestedDhammaTracksProvider call(
+    int offset,
+    int limit,
+  ) {
+    return GetSuggestedDhammaTracksProvider(
+      offset,
+      limit,
+    );
+  }
+
+  @override
+  GetSuggestedDhammaTracksProvider getProviderOverride(
+    covariant GetSuggestedDhammaTracksProvider provider,
+  ) {
+    return call(
+      provider.offset,
+      provider.limit,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getSuggestedDhammaTracksProvider';
+}
+
+/// See also [getSuggestedDhammaTracks].
+class GetSuggestedDhammaTracksProvider
+    extends AutoDisposeFutureProvider<List<MusicModel>> {
+  /// See also [getSuggestedDhammaTracks].
+  GetSuggestedDhammaTracksProvider(
+    int offset,
+    int limit,
+  ) : this._internal(
+          (ref) => getSuggestedDhammaTracks(
+            ref as GetSuggestedDhammaTracksRef,
+            offset,
+            limit,
+          ),
+          from: getSuggestedDhammaTracksProvider,
+          name: r'getSuggestedDhammaTracksProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getSuggestedDhammaTracksHash,
+          dependencies: GetSuggestedDhammaTracksFamily._dependencies,
+          allTransitiveDependencies:
+              GetSuggestedDhammaTracksFamily._allTransitiveDependencies,
+          offset: offset,
+          limit: limit,
+        );
+
+  GetSuggestedDhammaTracksProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.offset,
+    required this.limit,
+  }) : super.internal();
+
+  final int offset;
+  final int limit;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<MusicModel>> Function(GetSuggestedDhammaTracksRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetSuggestedDhammaTracksProvider._internal(
+        (ref) => create(ref as GetSuggestedDhammaTracksRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        offset: offset,
+        limit: limit,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<MusicModel>> createElement() {
+    return _GetSuggestedDhammaTracksProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetSuggestedDhammaTracksProvider &&
+        other.offset == offset &&
+        other.limit == limit;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, offset.hashCode);
+    hash = _SystemHash.combine(hash, limit.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetSuggestedDhammaTracksRef
+    on AutoDisposeFutureProviderRef<List<MusicModel>> {
+  /// The parameter `offset` of this provider.
+  int get offset;
+
+  /// The parameter `limit` of this provider.
+  int get limit;
+}
+
+class _GetSuggestedDhammaTracksProviderElement
+    extends AutoDisposeFutureProviderElement<List<MusicModel>>
+    with GetSuggestedDhammaTracksRef {
+  _GetSuggestedDhammaTracksProviderElement(super.provider);
+
+  @override
+  int get offset => (origin as GetSuggestedDhammaTracksProvider).offset;
+  @override
+  int get limit => (origin as GetSuggestedDhammaTracksProvider).limit;
+}
+
+String _$fetchTopTenPlayedTracksByBhikkhuHash() =>
+    r'bae779f97e79e41e12415dcb32a15298860054d0';
+
+/// See also [fetchTopTenPlayedTracksByBhikkhu].
+@ProviderFor(fetchTopTenPlayedTracksByBhikkhu)
+const fetchTopTenPlayedTracksByBhikkhuProvider =
+    FetchTopTenPlayedTracksByBhikkhuFamily();
+
+/// See also [fetchTopTenPlayedTracksByBhikkhu].
+class FetchTopTenPlayedTracksByBhikkhuFamily
+    extends Family<AsyncValue<List<MusicModel>>> {
+  /// See also [fetchTopTenPlayedTracksByBhikkhu].
+  const FetchTopTenPlayedTracksByBhikkhuFamily();
+
+  /// See also [fetchTopTenPlayedTracksByBhikkhu].
+  FetchTopTenPlayedTracksByBhikkhuProvider call(
+    String bhikkhuId,
+  ) {
+    return FetchTopTenPlayedTracksByBhikkhuProvider(
+      bhikkhuId,
+    );
+  }
+
+  @override
+  FetchTopTenPlayedTracksByBhikkhuProvider getProviderOverride(
+    covariant FetchTopTenPlayedTracksByBhikkhuProvider provider,
+  ) {
+    return call(
+      provider.bhikkhuId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'fetchTopTenPlayedTracksByBhikkhuProvider';
+}
+
+/// See also [fetchTopTenPlayedTracksByBhikkhu].
+class FetchTopTenPlayedTracksByBhikkhuProvider
+    extends AutoDisposeFutureProvider<List<MusicModel>> {
+  /// See also [fetchTopTenPlayedTracksByBhikkhu].
+  FetchTopTenPlayedTracksByBhikkhuProvider(
+    String bhikkhuId,
+  ) : this._internal(
+          (ref) => fetchTopTenPlayedTracksByBhikkhu(
+            ref as FetchTopTenPlayedTracksByBhikkhuRef,
+            bhikkhuId,
+          ),
+          from: fetchTopTenPlayedTracksByBhikkhuProvider,
+          name: r'fetchTopTenPlayedTracksByBhikkhuProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$fetchTopTenPlayedTracksByBhikkhuHash,
+          dependencies: FetchTopTenPlayedTracksByBhikkhuFamily._dependencies,
+          allTransitiveDependencies:
+              FetchTopTenPlayedTracksByBhikkhuFamily._allTransitiveDependencies,
+          bhikkhuId: bhikkhuId,
+        );
+
+  FetchTopTenPlayedTracksByBhikkhuProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.bhikkhuId,
+  }) : super.internal();
+
+  final String bhikkhuId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<MusicModel>> Function(
+            FetchTopTenPlayedTracksByBhikkhuRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FetchTopTenPlayedTracksByBhikkhuProvider._internal(
+        (ref) => create(ref as FetchTopTenPlayedTracksByBhikkhuRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        bhikkhuId: bhikkhuId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<MusicModel>> createElement() {
+    return _FetchTopTenPlayedTracksByBhikkhuProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FetchTopTenPlayedTracksByBhikkhuProvider &&
+        other.bhikkhuId == bhikkhuId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, bhikkhuId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin FetchTopTenPlayedTracksByBhikkhuRef
+    on AutoDisposeFutureProviderRef<List<MusicModel>> {
+  /// The parameter `bhikkhuId` of this provider.
+  String get bhikkhuId;
+}
+
+class _FetchTopTenPlayedTracksByBhikkhuProviderElement
+    extends AutoDisposeFutureProviderElement<List<MusicModel>>
+    with FetchTopTenPlayedTracksByBhikkhuRef {
+  _FetchTopTenPlayedTracksByBhikkhuProviderElement(super.provider);
+
+  @override
+  String get bhikkhuId =>
+      (origin as FetchTopTenPlayedTracksByBhikkhuProvider).bhikkhuId;
+}
+
 String _$getAllBhikkhusHash() => r'25e4eaf65f3c06f441f82c51495b79eacd83fcf7';
 
 /// See also [getAllBhikkhus].
@@ -63,6 +377,86 @@ final getAllBhikkhusProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetAllBhikkhusRef = AutoDisposeFutureProviderRef<List<BhikkhuModel>>;
+String _$getAllMingalarDhammaPlaylistsHash() =>
+    r'a2f8f4ebd9d48c9592e33c145e8102274ec18269';
+
+/// See also [getAllMingalarDhammaPlaylists].
+@ProviderFor(getAllMingalarDhammaPlaylists)
+final getAllMingalarDhammaPlaylistsProvider =
+    AutoDisposeFutureProvider<List<CustomPlaylistCompilationModel>>.internal(
+  getAllMingalarDhammaPlaylists,
+  name: r'getAllMingalarDhammaPlaylistsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getAllMingalarDhammaPlaylistsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetAllMingalarDhammaPlaylistsRef
+    = AutoDisposeFutureProviderRef<List<CustomPlaylistCompilationModel>>;
+String _$getTenMingalarDhammaPlaylistsHash() =>
+    r'17572fe63e80e7328d6dd919671b01bfa1938691';
+
+/// See also [getTenMingalarDhammaPlaylists].
+@ProviderFor(getTenMingalarDhammaPlaylists)
+final getTenMingalarDhammaPlaylistsProvider =
+    AutoDisposeFutureProvider<List<CustomPlaylistCompilationModel>>.internal(
+  getTenMingalarDhammaPlaylists,
+  name: r'getTenMingalarDhammaPlaylistsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getTenMingalarDhammaPlaylistsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetTenMingalarDhammaPlaylistsRef
+    = AutoDisposeFutureProviderRef<List<CustomPlaylistCompilationModel>>;
+String _$getAllUserDhammaPlaylistsHash() =>
+    r'fee15a0b89833673cd81e107b528417dff7818b7';
+
+/// See also [getAllUserDhammaPlaylists].
+@ProviderFor(getAllUserDhammaPlaylists)
+final getAllUserDhammaPlaylistsProvider =
+    AutoDisposeFutureProvider<List<CustomPlaylistCompilationModel>>.internal(
+  getAllUserDhammaPlaylists,
+  name: r'getAllUserDhammaPlaylistsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getAllUserDhammaPlaylistsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetAllUserDhammaPlaylistsRef
+    = AutoDisposeFutureProviderRef<List<CustomPlaylistCompilationModel>>;
+String _$getTenUserDhammaPlaylistsHash() =>
+    r'6eee6f5cf60d41a29f117ab9a704570c6a3e74f1';
+
+/// See also [getTenUserDhammaPlaylists].
+@ProviderFor(getTenUserDhammaPlaylists)
+final getTenUserDhammaPlaylistsProvider =
+    AutoDisposeFutureProvider<List<CustomPlaylistCompilationModel>>.internal(
+  getTenUserDhammaPlaylists,
+  name: r'getTenUserDhammaPlaylistsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getTenUserDhammaPlaylistsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetTenUserDhammaPlaylistsRef
+    = AutoDisposeFutureProviderRef<List<CustomPlaylistCompilationModel>>;
 String _$getAllDhammaCategoriesHash() =>
     r'81470b656e8765d43d993f7069818d2e37e9098a';
 
@@ -85,27 +479,6 @@ typedef GetAllDhammaCategoriesRef
     = AutoDisposeFutureProviderRef<List<DhammaCategoryModel>>;
 String _$getCollectionsByBhikkhuHash() =>
     r'0592a3c76101c913cc005239831aba8bb123eb8c';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
 
 /// See also [getCollectionsByBhikkhu].
 @ProviderFor(getCollectionsByBhikkhu)
@@ -392,6 +765,147 @@ class _GetBhikkhuByIdProviderElement
   String get bhikkhuId => (origin as GetBhikkhuByIdProvider).bhikkhuId;
 }
 
+String _$getPreferredCollectionsByBhikkhuHash() =>
+    r'70644e9979f2f84d13ec828898d6aa5f37240e4a';
+
+/// See also [getPreferredCollectionsByBhikkhu].
+@ProviderFor(getPreferredCollectionsByBhikkhu)
+const getPreferredCollectionsByBhikkhuProvider =
+    GetPreferredCollectionsByBhikkhuFamily();
+
+/// See also [getPreferredCollectionsByBhikkhu].
+class GetPreferredCollectionsByBhikkhuFamily
+    extends Family<AsyncValue<List<DhammaCollectionModel>>> {
+  /// See also [getPreferredCollectionsByBhikkhu].
+  const GetPreferredCollectionsByBhikkhuFamily();
+
+  /// See also [getPreferredCollectionsByBhikkhu].
+  GetPreferredCollectionsByBhikkhuProvider call(
+    String bhikkhuId,
+  ) {
+    return GetPreferredCollectionsByBhikkhuProvider(
+      bhikkhuId,
+    );
+  }
+
+  @override
+  GetPreferredCollectionsByBhikkhuProvider getProviderOverride(
+    covariant GetPreferredCollectionsByBhikkhuProvider provider,
+  ) {
+    return call(
+      provider.bhikkhuId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getPreferredCollectionsByBhikkhuProvider';
+}
+
+/// See also [getPreferredCollectionsByBhikkhu].
+class GetPreferredCollectionsByBhikkhuProvider
+    extends AutoDisposeFutureProvider<List<DhammaCollectionModel>> {
+  /// See also [getPreferredCollectionsByBhikkhu].
+  GetPreferredCollectionsByBhikkhuProvider(
+    String bhikkhuId,
+  ) : this._internal(
+          (ref) => getPreferredCollectionsByBhikkhu(
+            ref as GetPreferredCollectionsByBhikkhuRef,
+            bhikkhuId,
+          ),
+          from: getPreferredCollectionsByBhikkhuProvider,
+          name: r'getPreferredCollectionsByBhikkhuProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getPreferredCollectionsByBhikkhuHash,
+          dependencies: GetPreferredCollectionsByBhikkhuFamily._dependencies,
+          allTransitiveDependencies:
+              GetPreferredCollectionsByBhikkhuFamily._allTransitiveDependencies,
+          bhikkhuId: bhikkhuId,
+        );
+
+  GetPreferredCollectionsByBhikkhuProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.bhikkhuId,
+  }) : super.internal();
+
+  final String bhikkhuId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<DhammaCollectionModel>> Function(
+            GetPreferredCollectionsByBhikkhuRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetPreferredCollectionsByBhikkhuProvider._internal(
+        (ref) => create(ref as GetPreferredCollectionsByBhikkhuRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        bhikkhuId: bhikkhuId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<DhammaCollectionModel>>
+      createElement() {
+    return _GetPreferredCollectionsByBhikkhuProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetPreferredCollectionsByBhikkhuProvider &&
+        other.bhikkhuId == bhikkhuId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, bhikkhuId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetPreferredCollectionsByBhikkhuRef
+    on AutoDisposeFutureProviderRef<List<DhammaCollectionModel>> {
+  /// The parameter `bhikkhuId` of this provider.
+  String get bhikkhuId;
+}
+
+class _GetPreferredCollectionsByBhikkhuProviderElement
+    extends AutoDisposeFutureProviderElement<List<DhammaCollectionModel>>
+    with GetPreferredCollectionsByBhikkhuRef {
+  _GetPreferredCollectionsByBhikkhuProviderElement(super.provider);
+
+  @override
+  String get bhikkhuId =>
+      (origin as GetPreferredCollectionsByBhikkhuProvider).bhikkhuId;
+}
+
 String _$getCollectionTracksHash() =>
     r'df295dbe93cbbe7f29ba4f893b9c2e8cb2269bc1';
 
@@ -527,7 +1041,7 @@ class _GetCollectionTracksProviderElement
       (origin as GetCollectionTracksProvider).collectionModel;
 }
 
-String _$dhammaViewModelHash() => r'faf44af1afa397773d2a7479413f9477c67c1208';
+String _$dhammaViewModelHash() => r'd7c4a5b55e8ff7102302793b47db554043375c0c';
 
 /// See also [DhammaViewModel].
 @ProviderFor(DhammaViewModel)

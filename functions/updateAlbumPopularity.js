@@ -157,6 +157,8 @@ async function updateAlbumPopularityScores() {
       topAlbums.forEach((album) => {
         batch.set(popularAlbumsRef
             .doc(album.id), {
+          id: album.id,
+          artistId: album.artistId,
           popularityScore: album.popularityScore,
           albumImageUrl: album.albumImageUrl,
           albumName: album.albumName,

@@ -4,10 +4,15 @@ import 'package:mingalar_music_app/core/models/custom_playlist_model.dart';
 import 'package:mingalar_music_app/core/providers/favorite_music_notifier.dart';
 import 'package:mingalar_music_app/core/theme/app_pallete.dart';
 import 'package:mingalar_music_app/core/widgets/create_upload_icon_text_button_widget.dart';
+import 'package:mingalar_music_app/core/widgets/custom_playlist_icon_widget.dart';
 import 'package:mingalar_music_app/core/widgets/music_list_playlist_widget.dart';
+import 'package:mingalar_music_app/core/widgets/music_list_usergen_playlist_widget.dart';
 import 'package:mingalar_music_app/core/widgets/playlist_icon_widget.dart';
 import 'package:mingalar_music_app/features/dhamma/view/screens/dhamma_upload_screen.dart';
+import 'package:mingalar_music_app/features/dhamma/viewmodel/dhamma_view_model.dart';
 import 'package:mingalar_music_app/features/home/models/music_model.dart';
+import 'package:mingalar_music_app/features/libraryDhammaPlaylist/view/widgets/create_dhamma_playlist_widget.dart';
+import 'package:mingalar_music_app/features/libraryMusicPlaylist/view/widgets/create_music_playlist_widget.dart';
 
 class LibraryDhammaPlaylistScreen extends ConsumerStatefulWidget {
   const LibraryDhammaPlaylistScreen({super.key});
@@ -21,6 +26,10 @@ class _LibraryDhammaPlaylistScreenState
     extends ConsumerState<LibraryDhammaPlaylistScreen> {
   @override
   Widget build(BuildContext context) {
+    final customPlaylists = ref
+        .watch(dhammaViewModelProvider.notifier)
+        .getUserGeneratedDhammaPlaylists();
+
     final Map<String, MusicModel> favorites =
         ref.watch(favoriteMusicNotifierProvider);
     final Map<String, MusicModel> dhammaFavorites = {};
@@ -82,10 +91,74 @@ class _LibraryDhammaPlaylistScreenState
                     AppPallete.gradient5,
                   ]),
             ),
-            //ListView.separated(itemBuilder: itemBuilder, separatorBuilder: separatorBuilder, itemCount: itemCount),
+            customPlaylists.isNotEmpty
+                ? Flexible(
+                    child: ListView.separated(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: customPlaylists.length,
+                      itemBuilder: (context, index) {
+                        final customPlaylist = customPlaylists[index];
+
+                        final customRecentPlaylistModel = CustomPlaylistModel(
+                          id: customPlaylist.id,
+                          title: customPlaylist.title,
+                          count: customPlaylist.tracks.length,
+                          playlist: customPlaylist.tracks,
+                          playListType: 'Dhamma',
+                        );
+
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) {
+                                  return MusicListUsergenPlaylistWidget(
+                                    playlist: customPlaylist,
+                                    customRecentPlaylist:
+                                        customRecentPlaylistModel,
+                                  );
+                                },
+                                transitionsBuilder: (context, animation,
+                                    secondaryAnimation, child) {
+                                  final tween = Tween(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero)
+                                      .chain(
+                                    CurveTween(
+                                      curve: Curves.easeIn,
+                                    ),
+                                  );
+
+                                  final offsetAnimation =
+                                      animation.drive(tween);
+
+                                  return SlideTransition(
+                                    position: offsetAnimation,
+                                    child: child,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          child: CustomPlaylistIconWidget(
+                            title: customPlaylist.title,
+                            description: customPlaylist.description,
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) => const SizedBox(
+                        height: 10,
+                      ),
+                    ),
+                  )
+                : SizedBox(),
             const SizedBox(height: 10),
             CreateUploadIconTextButtonWidget(
-              onTap: () {},
+              onTap: () {
+                createModalBottomSheet(context);
+              },
               title: 'Create Custom Playlist',
             ),
             const SizedBox(height: 10),
@@ -121,6 +194,87 @@ class _LibraryDhammaPlaylistScreenState
           ],
         ),
       ],
+    );
+  }
+
+  Future<dynamic> createModalBottomSheet(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.18,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              leading: Icon(Icons.music_note_rounded),
+              title: Text('Create Music Playlist'),
+              onTap: () {
+                Navigator.of(context).pushReplacement(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) {
+                      return CreateMusicPlaylistWidget();
+                    },
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final tween =
+                          Tween(begin: const Offset(0, 1), end: Offset.zero)
+                              .chain(
+                        CurveTween(
+                          curve: Curves.easeIn,
+                        ),
+                      );
+
+                      final offsetAnimation = animation.drive(tween);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.music_note_rounded),
+              title: Text('Create Dhamma Playlist'),
+              onTap: () {
+                Navigator.of(context).pushReplacement(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) {
+                      return CreateDhammaPlaylistWidget();
+                    },
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final tween =
+                          Tween(begin: const Offset(0, 1), end: Offset.zero)
+                              .chain(
+                        CurveTween(
+                          curve: Curves.easeIn,
+                        ),
+                      );
+
+                      final offsetAnimation = animation.drive(tween);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,18 +1,35 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:hive/hive.dart';
+
+part 'artist_model.g.dart';
+
+@HiveType(typeId: 1)
 class ArtistModel {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String nameENG;
+  @HiveField(2)
   final String nameMM;
+  @HiveField(3)
   final String profileImageUrl;
+  @HiveField(4)
   final String ownerId;
+  @HiveField(5)
   final int totalPlayCount;
+  @HiveField(6)
   final int totalLikes;
+  @HiveField(7)
   final int totalShare;
+  @HiveField(8)
   final int totalDownloads;
+  @HiveField(9)
   final int totalFollowers;
+  @HiveField(10)
   final int totalFollowing;
+  @HiveField(11)
   final int vault;
   ArtistModel({
     required this.id,
